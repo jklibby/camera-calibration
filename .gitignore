@@ -1,0 +1,7 @@
+__pycache__
+
+paired_images
+single_images
+intrinsics
+venv
+*.npz
