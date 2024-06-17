@@ -34,7 +34,7 @@ def capture_single_image(cam_id, count):
             break
         
         if not start_capture:
-            start_frame = cv.putText(frame, "Press space to begin capturing images; q to quit",(100, 100), cv.FONT_HERSHEY_PLAIN, 2, (0, 0, 255), 1, 1)
+            start_frame = cv.putText(frame, "Press space to begin capturing images; q to quit",(100, 100), cv.FONT_HERSHEY_COMPLEX, 2, (0, 0, 255), 2, 1)
             cv.imshow("Frame", start_frame)
 
         if start_capture:
@@ -42,7 +42,7 @@ def capture_single_image(cam_id, count):
                 cv.imwrite('{}/camera{}_{}.png'.format(dir, cam_id, cap_count), frame)
                 cooldown = 50
                 cap_count += 1
-            text_frame = cv.putText(frame, "Num of images captured: {}\n Countdown: {}".format(cap_count, cooldown),(100, 100), cv.FONT_HERSHEY_PLAIN, 2, (0, 255, 0), 1, 1)
+            text_frame = cv.putText(frame, "Num of images captured: {}\n Countdown: {}".format(cap_count, cooldown),(100, 100), cv.FONT_HERSHEY_COMPLEX, 2, (0, 255, 0), 2, 1)
             cv.imshow("Frame", text_frame)
             cooldown -= 1
             if cap_count >= count:
@@ -83,8 +83,8 @@ def capture_paired_images(left_cam, right_cam, count):
             break
 
         if not start_capture:
-            left_start_frame = cv.putText(left_frame, "Press space to begin capturing images; q to quit",(100, 100), cv.FONT_HERSHEY_PLAIN, 2, (0, 0, 255), 1, 1)
-            right_start_frame = cv.putText(right_frame, "Press space to begin capturing images; q to quit",(100, 100), cv.FONT_HERSHEY_PLAIN, 2, (255, 0, 0), 1, 1)
+            left_start_frame = cv.putText(left_frame, "Press space to begin capturing images; q to quit",(100, 100), cv.FONT_HERSHEY_COMPLEX, 2, (0, 0, 255), 2, 1)
+            right_start_frame = cv.putText(right_frame, "Press space to begin capturing images; q to quit",(100, 100), cv.FONT_HERSHEY_COMPLEX, 2, (255, 0, 0), 2, 1)
             cv.imshow("Left Frame", left_start_frame)
             cv.imshow("Right Frame", right_start_frame)
         
@@ -94,8 +94,8 @@ def capture_paired_images(left_cam, right_cam, count):
                 cv.imwrite('{}/camera1_{}.png'.format(dir, cap_count), right_frame)
                 cooldown = 50
                 cap_count += 1
-            left_text_frame = cv.putText(left_frame, "Num of images captured: {}\n Countdown: {}".format(cap_count, cooldown),(100, 100), cv.FONT_HERSHEY_PLAIN, 2, (0, 255, 0), 1, 1)
-            right_text_frame = cv.putText(right_frame, "Num of images captured: {}\n Countdown: {}".format(cap_count, cooldown),(100, 100), cv.FONT_HERSHEY_PLAIN, 2, (0, 255, 0), 1, 1)
+            left_text_frame = cv.putText(left_frame, "Num of images captured: {}\n Countdown: {}".format(cap_count, cooldown),(100, 100), cv.FONT_HERSHEY_COMPLEX, 2, (0, 255, 0), 2, 1)
+            right_text_frame = cv.putText(right_frame, "Num of images captured: {}\n Countdown: {}".format(cap_count, cooldown),(100, 100), cv.FONT_HERSHEY_COMPLEX, 2, (0, 255, 0), 2, 1)
             cv.imshow("Left Frame", left_text_frame)
             cv.imshow("Right Frame", right_text_frame)
             cooldown -= 1

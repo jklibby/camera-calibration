@@ -29,7 +29,7 @@ def single_camera_calibrate(cam_id, count, pattern_size=(7, 7)):
             cv.cornerSubPix(g_frame, corners, (11, 11), (-1, -1), (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_COUNT, 30, 1e-6))
             # display chessboard pattern on images
             pattern_frame = cv.drawChessboardCorners(frame, pattern_size, corners, ret)
-            start_frame = cv.putText(pattern_frame, "Press space to find chessboard corners; s to skip to skip current frame; q to quit; Index: {}".format(idx),(100, 100), cv.FONT_HERSHEY_PLAIN, 2, (0, 255, 0), 1, 1)
+            start_frame = cv.putText(pattern_frame, "Press space to find chessboard corners; s to skip to skip current frame; q to quit; Index: {}".format(idx),(100, 100), cv.FONT_HERSHEY_COMPLEX, 2, (0, 255, 0), 3, 1)
             display_frames.append((start_frame, corners))
 
 
@@ -53,7 +53,7 @@ def single_camera_calibrate(cam_id, count, pattern_size=(7, 7)):
         if key & 0xFF == ord('q'):
             break
         
-    
+    cv.destroyAllWindows()
     # calculate intrinsic params
     ret, mtx, dist, rvecs, tvecs = cv.calibrateCamera(world_points, selected_corners, (width, height), None, None)
     print("{} - RMSE: ".format(cam_id), ret)

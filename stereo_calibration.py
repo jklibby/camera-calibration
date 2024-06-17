@@ -5,7 +5,7 @@ from pprint import pprint
 
 def stereo_camera_calibrate(count, pattern_size=(7, 7)):
     frame_pair_dir = 'paired_images'
-    criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 1e-6)
+    criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 100, 1e-7)
 
     wp = np.zeros((np.prod(pattern_size), 3), dtype=np.float32)
     wp[:, :2] = np.mgrid[:pattern_size[0], :pattern_size[1]].T.reshape(-1, 2)
@@ -30,8 +30,8 @@ def stereo_camera_calibrate(count, pattern_size=(7, 7)):
             cv.cornerSubPix(right_g_frame, right_corners, (11, 11), (-1, -1),criteria)
             left_pattern_frame = cv.drawChessboardCorners(left_frame, pattern_size, left_corners, left_ret)
             right_pattern_frame = cv.drawChessboardCorners(right_frame, pattern_size, right_corners, right_ret)
-            left_start_frame = cv.putText(left_pattern_frame, "Press space to find chessboard corners; s to skip to skip current frame; q to quit; Index: {}".format(index),(100, 100), cv.FONT_HERSHEY_PLAIN, 2, (0, 255, 0), 1, 1)
-            right_start_frame = cv.putText(right_pattern_frame, "Press space to find chessboard corners; s to skip to skip current frame; q to quit; Index: {}".format(index),(100, 100), cv.FONT_HERSHEY_PLAIN, 2, (0, 255, 0), 1, 1)
+            left_start_frame = cv.putText(left_pattern_frame, "Press space to find chessboard corners; s to skip to skip current frame; q to quit; Index: {}".format(index),(100, 100), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 3, 1)
+            right_start_frame = cv.putText(right_pattern_frame, "Press space to find chessboard corners; s to skip to skip current frame; q to quit; Index: {}".format(index),(100, 100), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 3, 1)
             left_display_frames.append((left_start_frame, left_corners))
             right_display_frames.append((right_start_frame, right_corners))
 
