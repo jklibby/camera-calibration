@@ -26,10 +26,10 @@ def single_camera_calibrate(cam_id, count, pattern_size=(7, 7)):
         # find chessboard corners
         ret, corners = cv.findChessboardCorners(g_frame, pattern_size)
         if ret:
-            cv.cornerSubPix(g_frame, corners, (11, 11), (-1, -1), (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_COUNT, 30, 1e-6))
+            cv.cornerSubPix(g_frame, corners, (9, 9), (-1, -1), (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_COUNT, 100, 1e-6))
             # display chessboard pattern on images
             pattern_frame = cv.drawChessboardCorners(frame, pattern_size, corners, ret)
-            start_frame = cv.putText(pattern_frame, "Press space to find chessboard corners; s to skip to skip current frame; q to quit; Index: {}".format(idx),(100, 100), cv.FONT_HERSHEY_COMPLEX, 2, (0, 255, 0), 3, 1)
+            start_frame = cv.putText(pattern_frame, "Press space to find chessboard corners; s to skip to skip current frame; q to quit; Index: {}".format(idx),(100, 100), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 3, 1)
             display_frames.append((start_frame, corners))
 
 

@@ -34,7 +34,7 @@ def capture_single_image(cam_id, count):
             break
         
         if not start_capture:
-            start_frame = cv.putText(frame, "Press space to begin capturing images; q to quit",(100, 100), cv.FONT_HERSHEY_COMPLEX, 2, (0, 0, 255), 2, 1)
+            start_frame = cv.putText(frame, "Press space to begin capturing images; q to quit",(100, 100), cv.FONT_HERSHEY_COMPLEX, 1, (0, 0, 255), 2, 1)
             cv.imshow("Frame", start_frame)
 
         if start_capture:
@@ -42,7 +42,7 @@ def capture_single_image(cam_id, count):
                 cv.imwrite('{}/camera{}_{}.png'.format(dir, cam_id, cap_count), frame)
                 cooldown = 50
                 cap_count += 1
-            text_frame = cv.putText(frame, "Num of images captured: {}\n Countdown: {}".format(cap_count, cooldown),(100, 100), cv.FONT_HERSHEY_COMPLEX, 2, (0, 255, 0), 2, 1)
+            text_frame = cv.putText(frame, "Num of images captured: {}\n Countdown: {}".format(cap_count, cooldown),(100, 100), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2, 1)
             cv.imshow("Frame", text_frame)
             cooldown -= 1
             if cap_count >= count:
@@ -83,8 +83,8 @@ def capture_paired_images(left_cam, right_cam, count):
             break
 
         if not start_capture:
-            left_start_frame = cv.putText(left_frame, "Press space to begin capturing images; q to quit",(100, 100), cv.FONT_HERSHEY_COMPLEX, 2, (0, 0, 255), 2, 1)
-            right_start_frame = cv.putText(right_frame, "Press space to begin capturing images; q to quit",(100, 100), cv.FONT_HERSHEY_COMPLEX, 2, (255, 0, 0), 2, 1)
+            left_start_frame = cv.putText(left_frame, "Press space to begin capturing images; q to quit",(100, 100), cv.FONT_HERSHEY_COMPLEX, 1, (0, 0, 255), 2, 1)
+            right_start_frame = cv.putText(right_frame, "Press space to begin capturing images; q to quit",(100, 100), cv.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 2, 1)
             cv.imshow("Left Frame", left_start_frame)
             cv.imshow("Right Frame", right_start_frame)
         
@@ -94,8 +94,8 @@ def capture_paired_images(left_cam, right_cam, count):
                 cv.imwrite('{}/camera1_{}.png'.format(dir, cap_count), right_frame)
                 cooldown = 50
                 cap_count += 1
-            left_text_frame = cv.putText(left_frame, "Num of images captured: {}\n Countdown: {}".format(cap_count, cooldown),(100, 100), cv.FONT_HERSHEY_COMPLEX, 2, (0, 255, 0), 2, 1)
-            right_text_frame = cv.putText(right_frame, "Num of images captured: {}\n Countdown: {}".format(cap_count, cooldown),(100, 100), cv.FONT_HERSHEY_COMPLEX, 2, (0, 255, 0), 2, 1)
+            left_text_frame = cv.putText(left_frame, "Num of images captured: {}\n Countdown: {}".format(cap_count, cooldown),(100, 100), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2, 1)
+            right_text_frame = cv.putText(right_frame, "Num of images captured: {}\n Countdown: {}".format(cap_count, cooldown),(100, 100), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2, 1)
             cv.imshow("Left Frame", left_text_frame)
             cv.imshow("Right Frame", right_text_frame)
             cooldown -= 1
@@ -104,3 +104,76 @@ def capture_paired_images(left_cam, right_cam, count):
     cv.destroyAllWindows()
     left_cap.release()
     right_cap.release()
+
+
+
+def get_points_of_interest(left_cam=0, right_cam=1):
+
+    left_cap = cv.VideoCapture(left_cam)
+    right_cap = cv.VideoCapture(right_cam)
+
+    if not (left_cap.isOpened() and right_cap.isOpened()):
+        print("Cannot read video frames")
+        exit()
+    
+    left_poi = POICollection("left")
+    right_poi = POICollection("right")
+
+    while True:
+        lret, left_frame = left_cap.read()
+        rret, right_frame = right_cap.read()
+        key = cv.waitKey(1) & 0xFF
+        
+        cv.imshow("left", left_frame)
+        cv.imshow("right", right_frame)
+
+        if not (rret and lret):
+            print("Cannot read video frames")
+            left_cap.release()
+            right_cap.release()
+            break
+        
+        if key == ord('q'):
+            left_cap.release()
+            right_cap.release()
+            cv.destroyAllWindows()
+            break
+    
+    cv.namedWindow("left_image")
+    cv.setMouseCallback("left_image", left_poi.add)
+
+    while True:
+        cv.imshow("left_image", left_frame)
+        if len(left_poi.collection) > 0:
+            if left_poi.collection[-1]:
+                left_frame = cv.putText(left_frame, '{}'.format(len(left_poi.collection)), left_poi.collection[-1], cv.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 3, 1)
+        # cv.imshow("right_image", right_frame)
+        key = cv.waitKey(1) & 0xFF
+        if key == ord('w'):
+            cv.destroyAllWindows()
+            break
+    
+    cv.namedWindow("right_image")
+    cv.setMouseCallback("right_image", right_poi.add)
+    while True:
+        cv.imshow("right_image", right_frame)
+        if len(right_poi.collection) > 0:
+            if right_poi.collection[-1]:
+                right_frame = cv.putText(right_frame, '{}'.format(len(right_poi.collection)), right_poi.collection[-1], cv.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 3, 1)
+        key = cv.waitKey(1) & 0xFF
+        if key == ord('q'):
+            cv.destroyAllWindows()
+            break
+
+    cv.destroyAllWindows()
+    return(left_poi.collection, right_poi.collection)
+
+class POICollection(object):
+    def __init__(self, window):
+        self.window = window
+        self.collection = list()
+    
+    def add(self, event, x, y, flags, param):
+        print("event: {}: {}".format(self.window, event), cv.EVENT_LBUTTONDBLCLK)
+        if event == cv.EVENT_LBUTTONDOWN:
+            self.collection.append((x, y))
