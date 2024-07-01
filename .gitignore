@@ -1,7 +1,13 @@
 __pycache__
 
-paired_images
-single_images
-intrinsics
+paired_images*
+single_images*
+intrinsics*
+extrinsics*
+rectified*
+rectified_*
 venv
 *.npz
+*.npy
+
+*.json

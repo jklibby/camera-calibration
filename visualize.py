@@ -9,3 +9,5 @@ def visualize_pcd(points):
     ax.scatter(points[:, 0], points[:, 1], points[:, 2])
 
     plt.show()
+
+

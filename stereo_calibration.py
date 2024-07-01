@@ -1,11 +1,19 @@
 import numpy as np
 import cv2 as cv
+import os
 from pprint import pprint
 
+from utils import checkerboard_orientation
 
-def stereo_camera_calibrate(count, pattern_size=(7, 7)):
-    frame_pair_dir = 'paired_images'
-    criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 100, 1e-7)
+
+def stereo_camera_calibrate(count, path, pattern_size=(7, 7), flags=None, dir=None, skip_gui=False):
+    extrinsics_dir = "extrinsics"
+    if dir:
+        extrinsics_dir = "{}/{}".format(extrinsics_dir, dir)
+    if not os.path.exists(extrinsics_dir):
+        os.makedirs(extrinsics_dir)
+    frame_pair_dir = path
+    criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 100, 1e-5)
 
     wp = np.zeros((np.prod(pattern_size), 3), dtype=np.float32)
     wp[:, :2] = np.mgrid[:pattern_size[0], :pattern_size[1]].T.reshape(-1, 2)
@@ -26,12 +34,18 @@ def stereo_camera_calibrate(count, pattern_size=(7, 7)):
         left_ret, left_corners = cv.findChessboardCorners(left_g_frame, pattern_size)
         right_ret, right_corners = cv.findChessboardCorners(right_g_frame, pattern_size)
         if left_ret and right_ret:
-            cv.cornerSubPix(left_g_frame, left_corners, (11, 11), (-1, -1), criteria)
-            cv.cornerSubPix(right_g_frame, right_corners, (11, 11), (-1, -1),criteria)
+            cv.cornerSubPix(left_g_frame, left_corners, (9, 9), (-1, -1), criteria)
+            cv.cornerSubPix(right_g_frame, right_corners, (9, 9), (-1, -1), criteria)
+            left_orientation = checkerboard_orientation(left_corners)
+            right_orientation = checkerboard_orientation(right_corners)
+            if left_orientation != right_orientation:
+                continue
             left_pattern_frame = cv.drawChessboardCorners(left_frame, pattern_size, left_corners, left_ret)
             right_pattern_frame = cv.drawChessboardCorners(right_frame, pattern_size, right_corners, right_ret)
             left_start_frame = cv.putText(left_pattern_frame, "Press space to find chessboard corners; s to skip to skip current frame; q to quit; Index: {}".format(index),(100, 100), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 3, 1)
             right_start_frame = cv.putText(right_pattern_frame, "Press space to find chessboard corners; s to skip to skip current frame; q to quit; Index: {}".format(index),(100, 100), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 3, 1)
+            left_start_frame = cv.putText(left_start_frame, "Orientation: {}".format(left_orientation),(100, 200), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 3, 1)
+            right_start_frame = cv.putText(right_start_frame, "Orientation: {}".format(right_orientation),(100, 200), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 3, 1)
             left_display_frames.append((left_start_frame, left_corners))
             right_display_frames.append((right_start_frame, right_corners))
 
@@ -39,29 +53,39 @@ def stereo_camera_calibrate(count, pattern_size=(7, 7)):
     right_selected_corners = []
     index = 0
     while True:
-        cv.imshow("Left Frames", left_display_frames[index][0])
-        cv.imshow("Right Frames", right_display_frames[index][0])
-        key = cv.waitKey(1)
-        if key & 0xFF == ord(' '):
+        if skip_gui:
+            cv.imshow("Left Frames", left_display_frames[index][0])
+            cv.imshow("Right Frames", right_display_frames[index][0])
+            key = cv.waitKey(1)
+            if key & 0xFF == ord(' '):
+                left_selected_corners.append(left_display_frames[index][1])
+                right_selected_corners.append(right_display_frames[index][1])
+                world_points.append(wp)
+                index += 1
+            
+            if key & 0xFF == ord('s'):
+                print('skipped: {}'.format(index))
+                index += 1
+            
+            if key & 0xFF == ord('q'):
+                break
             left_selected_corners.append(left_display_frames[index][1])
             right_selected_corners.append(right_display_frames[index][1])
             world_points.append(wp)
             index += 1
-        
-        if key & 0xFF == ord('s'):
-            print('skipped: {}'.format(index))
+        else:
+            left_selected_corners.append(left_display_frames[index][1])
+            right_selected_corners.append(right_display_frames[index][1])
+            world_points.append(wp)
             index += 1
-        
-        if key & 0xFF == ord('q'):
-            break
 
         if index >= count or index >= len(left_display_frames):
             break
     
     cv.destroyAllWindows()
 
-    intrinsic_data_0 = np.load('intrinsics/camera_calibration-0.npz')
-    intrinsic_data_1 = np.load('intrinsics/camera_calibration-1.npz')
+    intrinsic_data_0 = np.load('intrinsics/{}/camera_calibration_0.npz'.format(dir))
+    intrinsic_data_1 = np.load('intrinsics/{}/camera_calibration_1.npz'.format(dir))
     left_cam_mtx = intrinsic_data_0['calibration_mtx']
     left_dist = intrinsic_data_0['dist']
     right_cam_mtx = intrinsic_data_1['calibration_mtx']
@@ -70,23 +94,32 @@ def stereo_camera_calibrate(count, pattern_size=(7, 7)):
     # new_left_mtx, _ = cv.getOptimalNewCameraMatrix(left_cam_mtx, left_dist, image_size, 1, image_size)
     # new_right_mtx, _ = cv.getOptimalNewCameraMatrix(right_cam_mtx, right_dist, image_size, 1, image_size)
     
-    flags = cv.CALIB_FIX_INTRINSIC
-    ret, cm1, dist1, cm2, dist2, R, T, E, F = cv.stereoCalibrate(world_points, left_selected_corners, right_selected_corners, left_cam_mtx, left_dist, right_cam_mtx, right_dist, image_size, criteria=criteria, flags=flags)
-    print(ret)
-    np.savez('stereo_calibration', R=R, T=T, E=E, F=F, image_size=image_size)
-    return
+    if flags:
+        ret, cm1, dist1, cm2, dist2, R, T, E, F = cv.stereoCalibrate(world_points, left_selected_corners, right_selected_corners, left_cam_mtx, left_dist, right_cam_mtx, right_dist, image_size, criteria=criteria, flags=flags)
+    else:
+        ret, cm1, dist1, cm2, dist2, R, T, E, F = cv.stereoCalibrate(world_points, left_selected_corners, right_selected_corners, left_cam_mtx, left_dist, right_cam_mtx, right_dist, image_size, criteria=criteria)
+    print("Stereo RMSE: ", ret)
+    print("Baseline: {0:3f} cm | ".format(np.linalg.norm(T) * 1.5))
+    pprint(T)
+    np.savez('{}/stereo_calibration'.format(extrinsics_dir), R=R, T=T, E=E, F=F, image_size=image_size)
+    return ret
 
 
-def stereo_rectification(count, pattern_size=(7, 7)):
-    intrinsic_data_0 = np.load('intrinsics/camera_calibration-0.npz')
-    intrinsic_data_1 = np.load('intrinsics/camera_calibration-1.npz')
+def stereo_rectification(count, path, dir=None, skip_gui=True):
+    rectified_dir = 'rectified_images'
+    if dir:
+        rectified_dir = "{}/{}".format(rectified_dir, dir)
+    if not os.path.exists(rectified_dir):
+        os.makedirs(rectified_dir)
+    intrinsic_data_0 = np.load('intrinsics/{}/camera_calibration_0.npz'.format(dir))
+    intrinsic_data_1 = np.load('intrinsics/{}/camera_calibration_1.npz'.format(dir))
     left_cam_mtx = intrinsic_data_0['calibration_mtx']
     left_dist = intrinsic_data_0['dist']
     right_cam_mtx = intrinsic_data_1['calibration_mtx']
     right_dist = intrinsic_data_1['dist']
 
     # load rotation and trnaslation
-    extrinsics = np.load('stereo_calibration.npz')
+    extrinsics = np.load('extrinsics/{}/stereo_calibration.npz'.format(dir))
     # perform stereo calibration
     R, T, E, F, image_size = extrinsics['R'], extrinsics['T'], extrinsics['E'], extrinsics['F'], extrinsics['image_size']
     left_rect, right_rect,  left_proj, right_proj, Q, left_roi, right_roi = cv.stereoRectify(
@@ -97,26 +130,38 @@ def stereo_rectification(count, pattern_size=(7, 7)):
         image_size, 
         R, T,
         None, None, None, None, 
-        flags=cv.CALIB_ZERO_DISPARITY, alpha=1
+        flags=(cv.CALIB_ZERO_DISPARITY + cv.CALIB_FIX_K3), alpha=1
     )
     left_map_x, left_map_y = cv.initUndistortRectifyMap(left_cam_mtx, left_dist, left_rect, left_proj, image_size, cv.CV_32FC1)
     right_map_x, right_map_y = cv.initUndistortRectifyMap(right_cam_mtx, right_dist, right_rect, right_proj, image_size, cv.CV_32FC1)
 
-    np.savez("stereo-rectified-maps", left_map_x=left_map_x, left_map_y=left_map_y, right_map_x=right_map_x, right_map_y=right_map_y)
+    np.savez("extrinsics/{}/stereo-rectified-maps".format(dir), left_map_x=left_map_x, left_map_y=left_map_y, right_map_x=right_map_x, right_map_y=right_map_y)
 
-    frame_pair_dir = 'paired_images'
+    if skip_gui:
+        return
+    frame_pair_dir = path
     images = [('{}/camera0_{}.png'.format(frame_pair_dir, cap_count), '{}/camera1_{}.png'.format(frame_pair_dir, cap_count)) for cap_count in range(count)]
     index = 0
     left_frame = cv.imread(images[index][0])
     right_frame = cv.imread(images[index][1])
     left_frame_rect = cv.remap(left_frame, left_map_x, left_map_y, cv.INTER_LANCZOS4)
     right_frame_rect = cv.remap(right_frame, right_map_x, right_map_y, cv.INTER_LANCZOS4)
+    rect_image = np.hstack([left_frame_rect, right_frame_rect])
+    height, width = left_frame.shape[:2]
+    num_lines = 50
+    interval = height // num_lines
+    x = 0
+    for i in range(num_lines):
+        x = interval*i
+        rect_image = cv.line(rect_image, (0, x), (width*2, x), (0, 255, 0))
     while True:
-        cv.imshow("Left Rectified Frame", left_frame_rect)
-        cv.imshow("Right Rectified Frame", right_frame_rect)
+        cv.imshow("Rectified", rect_image)
         key = cv.waitKey(1)
         if key & 0xFF == ord('q'):
             break
+        if key & 0xFF == ord('s'):
+            cv.imwrite('{}/camera0_{}.png'.format(rectified_dir, index), left_frame_rect)
+            cv.imwrite('{}/camera1_{}.png'.format(rectified_dir, index), right_frame_rect)
         if key & 0xFF == ord(' '):
             index += 1
             if index >= len(images):
@@ -125,4 +170,11 @@ def stereo_rectification(count, pattern_size=(7, 7)):
             right_frame = cv.imread(images[index][1])
             left_frame_rect = cv.remap(left_frame, left_map_x, left_map_y, cv.INTER_LANCZOS4)
             right_frame_rect = cv.remap(right_frame, right_map_x, right_map_y, cv.INTER_LANCZOS4)
+            rect_image = np.hstack([left_frame_rect, right_frame_rect])
+            x = 0
+            for i in range(num_lines):
+                x = interval*i
+                rect_image = cv.line(rect_image, (0, x), (width*2, x), (0, 255, 0))
     cv.destroyAllWindows()
+
+

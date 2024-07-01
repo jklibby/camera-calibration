@@ -1,4 +1,5 @@
 import cv2 as cv
+import numpy as np
 import os
 
 def capture_single_image(cam_id, count):
@@ -98,14 +99,12 @@ def capture_paired_images(left_cam, right_cam, count):
             right_text_frame = cv.putText(right_frame, "Num of images captured: {}\n Countdown: {}".format(cap_count, cooldown),(100, 100), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2, 1)
             cv.imshow("Left Frame", left_text_frame)
             cv.imshow("Right Frame", right_text_frame)
-            cooldown -= 1
+            cooldown -= 2
             if cap_count >= count:
                 break
     cv.destroyAllWindows()
     left_cap.release()
     right_cap.release()
-
-
 
 def get_points_of_interest(left_cam=0, right_cam=1):
 
@@ -139,6 +138,12 @@ def get_points_of_interest(left_cam=0, right_cam=1):
             cv.destroyAllWindows()
             break
     
+    remaps = np.load('stereo-rectified-maps.npz')
+    left_map_x, left_map_y, right_map_x, right_map_y = remaps['left_map_x'], remaps['left_map_y'], remaps['right_map_x'], remaps['right_map_y']
+    
+    left_frame = cv.remap(left_frame, left_map_x, left_map_y, cv.INTER_LANCZOS4)
+    right_frame = cv.remap(right_frame, right_map_x, right_map_y, cv.INTER_LANCZOS4)
+    
     cv.namedWindow("left_image")
     cv.setMouseCallback("left_image", left_poi.add)
 
@@ -155,6 +160,11 @@ def get_points_of_interest(left_cam=0, right_cam=1):
     
     cv.namedWindow("right_image")
     cv.setMouseCallback("right_image", right_poi.add)
+    colors = [(255, 0, 0), (0, 255, 0)]
+    for i, color in enumerate(colors):
+        if i >= len(left_poi.collection):
+            break
+        right_frame = cv.line(right_frame, (0, left_poi.collection[i][1]), (right_frame.shape[1], left_poi.collection[i][1]), color)
     while True:
         cv.imshow("right_image", right_frame)
         if len(right_poi.collection) > 0:
@@ -166,7 +176,7 @@ def get_points_of_interest(left_cam=0, right_cam=1):
             break
 
     cv.destroyAllWindows()
-    return(left_poi.collection, right_poi.collection)
+    return(left_poi.to_numpy(), right_poi.to_numpy())
 
 class POICollection(object):
     def __init__(self, window):
@@ -177,3 +187,6 @@ class POICollection(object):
         print("event: {}: {}".format(self.window, event), cv.EVENT_LBUTTONDBLCLK)
         if event == cv.EVENT_LBUTTONDOWN:
             self.collection.append((x, y))
+    
+    def to_numpy(self):
+        return np.array(self.collection)
