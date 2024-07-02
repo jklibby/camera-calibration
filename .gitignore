@@ -6,6 +6,7 @@ intrinsics*
 extrinsics*
 rectified*
 rectified_*
+results
 venv
 *.npz
 *.npy

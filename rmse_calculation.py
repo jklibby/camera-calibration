@@ -42,7 +42,6 @@ while True:
     results_file = "results_{}_{}_{}.npz".format(single_flags, paired_flags, index)
     results_file_name = "results_{}_{}_{}".format(single_flags, paired_flags, index)
         
-
 res_1 = start(total_count, index, single_flags, paired_flags, capture_single=(False, False), capture_paired=False)
 results = [res_1]
 print(res_1)
@@ -53,4 +52,4 @@ for i in range(30, total_count, step):
     print(res)
     print("*"* 150)
 
-np.savez(results_file_name, results=results)
+np.savez("results/{}".format(results_file_name), results=results)

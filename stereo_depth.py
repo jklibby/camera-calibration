@@ -121,6 +121,13 @@ def live_stereo_depth(left_cam, right_cam, baseline=25/1000):
     left_cap = cv.VideoCapture(left_cam)
     right_cap = cv.VideoCapture(right_cam)
 
+    left_cap.set(cv.CAP_PROP_FRAME_WIDTH, 1920)
+    left_cap.set(cv.CAP_PROP_FRAME_HEIGHT, 1080)
+
+    right_cap.set(cv.CAP_PROP_FRAME_WIDTH, 1920)
+    right_cap.set(cv.CAP_PROP_FRAME_HEIGHT, 1080)
+
+
     if not (left_cap.isOpened() and right_cap.isOpened()):
         print("Cannot read video frames")
         exit()
@@ -232,9 +239,10 @@ def get_object_measurement(left_cam, right_cam, pattern, dir):
                 p1, p2 = lcorners[0:3], rcorners[0:3]
                 pcd = get_3d_points(p1, p2, dir)
                 world_scaling = 1.5
-                return 2*world_scaling - np.linalg.norm(pcd[0] - pcd[-1]) * world_scaling# test grid dimension
+                return 2 * world_scaling - np.linalg.norm(pcd[0] - pcd[-1]) * world_scaling# test grid dimension
                 
-        cv.imshow("Recitfied Images", np.hstack([text_left_frame_rect, right_frame_rect]))
+        cv.imshow("Left Recitfied Images", left_frame_rect)
+        cv.imshow("Right Recitfied Images", right_frame_rect)
 
         if key == ord('q'):
             left_cap.release()

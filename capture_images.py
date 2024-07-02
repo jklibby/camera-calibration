@@ -12,6 +12,10 @@ def capture_single_image(cam_id, count):
     
     cap = cv.VideoCapture(cam_id)
 
+    cap.set(cv.CAP_PROP_FRAME_WIDTH, 1920)
+
+    cap.set(cv.CAP_PROP_FRAME_HEIGHT, 1080)
+
     if not cap.isOpened():
         print("Cannot open camera")
         exit()
@@ -58,6 +62,12 @@ def capture_paired_images(left_cam, right_cam, count):
     
     left_cap = cv.VideoCapture(left_cam)
     right_cap = cv.VideoCapture(right_cam)
+
+    left_cap.set(cv.CAP_PROP_FRAME_WIDTH, 1920)
+    left_cap.set(cv.CAP_PROP_FRAME_HEIGHT, 1080)
+
+    right_cap.set(cv.CAP_PROP_FRAME_WIDTH, 1920)
+    right_cap.set(cv.CAP_PROP_FRAME_HEIGHT, 1080)
 
     if not (left_cap.isOpened() and right_cap.isOpened()):
         print("Cannot read video frames")
@@ -110,6 +120,13 @@ def get_points_of_interest(left_cam=0, right_cam=1):
 
     left_cap = cv.VideoCapture(left_cam)
     right_cap = cv.VideoCapture(right_cam)
+
+    left_cap.set(cv.CAP_PROP_FRAME_WIDTH, 1920)
+    left_cap.set(cv.CAP_PROP_FRAME_HEIGHT, 1080)
+
+    right_cap.set(cv.CAP_PROP_FRAME_WIDTH, 1920)
+    right_cap.set(cv.CAP_PROP_FRAME_HEIGHT, 1080)
+
 
     if not (left_cap.isOpened() and right_cap.isOpened()):
         print("Cannot read video frames")

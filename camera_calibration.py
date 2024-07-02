@@ -107,6 +107,11 @@ def single_camera_pose_estimation(cam_id, pattern_size=(7, 7)):
     cc = np.load('intrinsics/f_30_128_1408/camera_calibration_{}.npz'.format(cam_id))
     mtx, dist = cc['calibration_mtx'], cc['dist']
     cap = cv.VideoCapture(cam_id)
+
+    cap.set(cv.CAP_PROP_FRAME_WIDTH, 1920)
+    cap.set(cv.CAP_PROP_FRAME_HEIGHT, 1080)
+
+  
     if not cap.isOpened():
         print("Cannot open camera")
         exit()
@@ -139,12 +144,14 @@ def single_camera_pose_estimation(cam_id, pattern_size=(7, 7)):
 
             
 def reprojection_error(world_points, corners, mtx, dist, rvecs, tvecs):
-    rmse = 0
+    se = 0
+    total_count = len(world_points) * world_points[0].shape[0]
     for i in range(len(world_points)):
         reprojected_points, _ = cv.projectPoints(world_points[i], rvecs[i], tvecs[i], mtx, dist)
-        error = np.linalg.norm((corners[i] - reprojected_points))/np.sqrt(world_points[i].shape[0])
-        rmse += error
-    return rmse / len(world_points)
+        error = np.linalg.norm((corners[i] - reprojected_points)) ** 2
+        se += error
+    mse = se / total_count
+    return np.sqrt(mse)
 
 def project_axis(world_points, corners, mtx, dist):
     axis = np.array([[[3.0, 0.0, 0.0]], [[0.0, 1.0, 0.0]], [[0.0, 0.0, -6.0]]], dtype=np.float32)
