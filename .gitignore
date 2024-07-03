@@ -1,5 +1,5 @@
 __pycache__
-
+.ipynb*
 paired_images*
 single_images*
 intrinsics*
@@ -10,5 +10,6 @@ results
 venv
 *.npz
 *.npy
+*.ipynb
 
 *.json

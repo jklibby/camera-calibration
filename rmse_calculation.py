@@ -15,11 +15,11 @@ def start(count, index, single_flags, paired_flags, capture_single=False, captur
     if capture_single[1]:
         capture_single_image(1, count)
     s_filename = "f_{}_{}_{}_{}".format(count, single_flags or 0, paired_flags or 0, index)
-    rmse_left = single_camera_calibrate(0, count, path=single_path, pattern_size=(10, 7), single_orientation=False, flags=single_flags, dir=s_filename)
-    rmse_right = single_camera_calibrate(1, count, path=single_path, pattern_size=(10, 7), single_orientation=False, flags=single_flags, dir=s_filename)
+    rmse_left = single_camera_calibrate(0, count, path=single_path, pattern_size=(10, 7), single_orientation=False, flags=single_flags, dir=s_filename, refine_val=-0.15)
+    rmse_right = single_camera_calibrate(1, count, path=single_path, pattern_size=(10, 7), single_orientation=False, flags=single_flags, dir=s_filename, refine_val=-0.7)
     if capture_paired:
         capture_paired_images(0, 1, count)
-    rmse = stereo_camera_calibrate(count, paired_path, (10, 7), flags=paired_flags, dir=s_filename, skip_gui=True)
+    rmse = stereo_camera_calibrate(count, paired_path, (10, 7), flags=paired_flags, dir=s_filename, skip_gui=True, refine_val=-1)
     stereo_rectification(count, paired_path, dir=s_filename)
 
     # project points and calculate distance
@@ -33,14 +33,14 @@ single_flags = (cv.CALIB_FIX_K3)
 paired_flags = (cv.CALIB_FIX_INTRINSIC + cv.CALIB_ZERO_DISPARITY + cv.CALIB_FIX_K3)
 
 index = 0
-results_file = "results_{}_{}_{}.npz".format(single_flags, paired_flags, index)
-results_file_name = "results_{}_{}_{}".format(single_flags, paired_flags, index)
+results_file = "results/results_{}_{}_{}.npz".format(single_flags, paired_flags, index)
+results_file_name = "results/results_{}_{}_{}".format(single_flags, paired_flags, index)
 while True:
     if not os.path.exists(results_file):
         break
     index += 1
-    results_file = "results_{}_{}_{}.npz".format(single_flags, paired_flags, index)
-    results_file_name = "results_{}_{}_{}".format(single_flags, paired_flags, index)
+    results_file = "results/results_{}_{}_{}.npz".format(single_flags, paired_flags, index)
+    results_file_name = "results/results_{}_{}_{}".format(single_flags, paired_flags, index)
         
 res_1 = start(total_count, index, single_flags, paired_flags, capture_single=(False, False), capture_paired=False)
 results = [res_1]
@@ -52,4 +52,4 @@ for i in range(30, total_count, step):
     print(res)
     print("*"* 150)
 
-np.savez("results/{}".format(results_file_name), results=results)
+np.savez(results_file_name, results=results)

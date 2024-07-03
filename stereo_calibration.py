@@ -6,7 +6,7 @@ from pprint import pprint
 from utils import checkerboard_orientation
 
 
-def stereo_camera_calibrate(count, path, pattern_size=(7, 7), flags=None, dir=None, skip_gui=False):
+def stereo_camera_calibrate(count, path, pattern_size=(7, 7), flags=None, dir=None, skip_gui=False, refine_val=1):
     extrinsics_dir = "extrinsics"
     if dir:
         extrinsics_dir = "{}/{}".format(extrinsics_dir, dir)
@@ -98,23 +98,46 @@ def stereo_camera_calibrate(count, path, pattern_size=(7, 7), flags=None, dir=No
         ret, cm1, dist1, cm2, dist2, R, T, E, F = cv.stereoCalibrate(world_points, left_selected_corners,  right_selected_corners, left_cam_mtx, left_dist, right_cam_mtx, right_dist, image_size, criteria=criteria)
     print("Stereo RMSE: ", ret)
     print("Baseline: {0:3f} cm | ".format(np.linalg.norm(T) * 1.5))
-    pprint(T)
     np.savez('{}/stereo_calibration'.format(extrinsics_dir), R=R, T=T, E=E, F=F, image_size=image_size)
 
-    index = 0 
+    if refine_val < 0:
+        return ret
     # per_view_errors = per_view_errors or []
-    while index < len(per_view_errors):
-        left_error_frame = left_display_frames[selected_index[index]][0]
-        right_error_frame = right_display_frames[selected_index[index]][0]
-        left_error_frame = cv.putText(left_error_frame, "Error: {}".format(per_view_errors[index]), (100, 200), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 3, 1)
-        right_error_frame = cv.putText(right_error_frame, "Error: {}".format(per_view_errors[index]), (100, 200), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 3, 1)
-        cv.imshow("Right Error Frame", right_error_frame)
-        cv.imshow("Left Error Frame", left_error_frame)
-        key  = cv.waitKey(1)
-        if key & 0xFF == ord(' '):
-            index += 1
-        if key & 0xFF == ord('q'):
-            break
+    index = 0 
+    # while index < len(per_view_errors):
+    #     left_error_frame = left_display_frames[selected_index[index]][0]
+    #     right_error_frame = right_display_frames[selected_index[index]][0]
+    #     left_error_frame = cv.putText(left_error_frame, "Error: {}".format(per_view_errors[index]), (100, 200), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 3, 1)
+    #     right_error_frame = cv.putText(right_error_frame, "Error: {}".format(per_view_errors[index]), (100, 200), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 3, 1)
+    #     cv.imshow("Right Error Frame", right_error_frame)
+    #     cv.imshow("Left Error Frame", left_error_frame)
+    #     key  = cv.waitKey(1)
+    #     if key & 0xFF == ord(' '):
+    #         index += 1
+    #     if key & 0xFF == ord('q'):
+    #         break
+    
+    per_view_errors = np.array(per_view_errors)
+    # refine stereo calibration by excluding calibration with high error
+    pi_1 = per_view_errors[per_view_errors[:, 0] < 1]
+    pi = pi_1[pi_1[:, 1] < 1]
+
+    indexes = np.array([np.argwhere(per_view_errors[:, 0] == a[0]) for a in pi])
+    indexes = indexes.reshape(-1)
+    if len(indexes) < 15:
+        print("Not enough images to calculate refined stereo")
+        return ret
+    left_selected_corners = np.array(left_selected_corners)
+    right_selected_corners = np.array(right_selected_corners)
+    world_points = np.array(world_points)
+
+    left_refined_corners, right_refined_corners, world_refined_corners = left_selected_corners[indexes, :], right_selected_corners[indexes, :], world_points[indexes, :]
+    print(left_refined_corners.shape, right_refined_corners.shape, world_refined_corners.shape)
+    ret, cm1, dist1, cm2, dist2, R, T, E, F = cv.stereoCalibrate(world_refined_corners, left_refined_corners,  right_refined_corners, left_cam_mtx, left_dist, right_cam_mtx, right_dist, image_size, criteria=criteria, flags=flags)
+    print("Refined Stereo RMSE: ", ret)
+    print("Baseline: {0:3f} cm | ".format(np.linalg.norm(T) * 1.5))
+    np.savez('{}/stereo_calibration'.format(extrinsics_dir), R=R, T=T, E=E, F=F, image_size=image_size)
+
     return ret
 
 
