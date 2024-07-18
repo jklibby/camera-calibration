@@ -1,12 +1,12 @@
 import click
 
-from capture_images import capture_single_image, capture_paired_images, get_points_of_interest
-from camera_calibration import single_camera_calibrate, single_camera_pose_estimation
-from stereo_calibration import stereo_camera_calibrate, stereo_rectification
-from stereo_depth import get_stereo_depth, live_stereo_depth, get_object_measurement
-from stereo_distance import get_3d_points
+from calibration import capture_single_image, capture_paired_images
+from calibration import single_camera_calibrate, single_camera_pose_estimation
+from calibration import stereo_camera_calibrate, stereo_rectification
+# from depth_estimation.stereo_depth import get_stereo_depth, live_stereo_depth, get_object_measurement
+# from depth_estimation.stereo_distance import get_3d_points
 
-PATTERN = (7, 7)
+PATTERN = (10, 7)
 
 @click.command
 @click.option("--capture-single", default=0)
@@ -20,7 +20,7 @@ PATTERN = (7, 7)
 @click.option("--stereo-depth", default=False)
 @click.option("--distance", default=False)
 def run(capture_single, capture_paired, calibrate_camera, calibrate_camera_path, detect_pose, calibrate_stereo_camera, calibrate_stereo_camera_path, calibrate_stereo_depth, stereo_depth, distance):
-    # cam_id is hard coded, maybe use a config file?
+    # TO-DO:cam_id is hard coded, maybe use a config file?
     cam_left = 0
     cam_right = 1
     if capture_single != 0:
@@ -42,14 +42,14 @@ def run(capture_single, capture_paired, calibrate_camera, calibrate_camera_path,
         stereo_camera_calibrate(calibrate_stereo_camera, calibrate_stereo_camera_path, PATTERN)
         stereo_rectification(calibrate_stereo_camera, calibrate_stereo_camera_path, PATTERN)
     
-    if calibrate_stereo_depth != 0:
-        get_stereo_depth(calibrate_stereo_depth, path=calibrate_stereo_camera_path)
-    if stereo_depth:
-        get_object_measurement(cam_left, cam_right, 50)
+    # if calibrate_stereo_depth != 0:
+    #     get_stereo_depth(calibrate_stereo_depth, path=calibrate_stereo_camera_path)
+    # if stereo_depth:
+    #     get_object_measurement(cam_left, cam_right, 50)
     
-    if distance:
-        p1, p2 = get_points_of_interest()
-        get_3d_points(p1, p2)
+    # if distance:
+    #     p1, p2 = get_points_of_interest()
+    #     get_3d_points(p1, p2)
 
 if __name__ == '__main__':
     run()

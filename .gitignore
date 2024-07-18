@@ -12,4 +12,5 @@ venv
 *.npy
 *.ipynb
 
+*.png
 *.json

@@ -14,15 +14,14 @@ def get_3d_points(p1, p2, dir):
     extrinsic = np.hstack([R, T])
     projection_matrix_1 = np.dot(K1, np.hstack([np.eye(3), np.zeros((3, 1))]))
     projection_matrix_2 = np.dot(K2, extrinsic)
-    print(projection_matrix_1)
-    print(projection_matrix_2)
     
     # points4d = cv.triangulatePoints(projection_matrix_1, projection_matrix_2, p1, p2)
     pcd = [triangulate(projection_matrix_1, projection_matrix_2, p1[i, :], p2[i, :]) for i in range(p1.shape[0])]
     if len(pcd) == 1:
         print(np.linalg.norm(pcd[0]))
     if len(pcd) == 2:
-        print(np.linalg.norm(pcd[0] - pcd[1]) * 2.225)
+        # TO-DO: Get world scaling from config
+        print(np.linalg.norm(pcd[0] - pcd[1]) * 1.5)
     return np.array(pcd)
 
 def opencv_triangulate(P1, P2, p1, p2):
@@ -46,8 +45,6 @@ def triangulate(P1, P2, point1, point2):
     from scipy import linalg
     U, s, Vh = linalg.svd(B, full_matrices = False)
 
-    print('Triangulated point: ')
-    print(Vh[3,0:3]/Vh[3,3])
     return Vh[3,0:3]/Vh[3,3]
 
 

@@ -1,11 +1,10 @@
 import numpy as np
 import cv2 as cv
 import os
-from collections import defaultdict
 
-from utils import checkerboard_orientation
+from utils.calibration import get_CB_corners
 
-def single_camera_calibrate(cam_id, count, path, pattern_size=(7, 7), single_orientation=True, flags=None, dir=None, skip_gui=False, refine_val=1):
+def single_camera_calibrate(cam_id, count, path, pattern_size=(7, 7), flags=None, dir=None, skip_gui=False, refine_val=1):
     # read all the images
     intrinsics_dir = 'intrinsics'
     if dir:
@@ -31,11 +30,8 @@ def single_camera_calibrate(cam_id, count, path, pattern_size=(7, 7), single_ori
         width = frame.shape[1]
         g_frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
         # find chessboard corners
-        ret, corners = cv.findChessboardCorners(g_frame, pattern_size)
+        ret, pattern_frame, corners = get_CB_corners(frame, pattern_size)
         if ret:
-            cv.cornerSubPix(g_frame, corners, (9, 9), (-1, -1), (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_COUNT, 100, 1e-6))
-            # display chessboard pattern on images
-            pattern_frame = cv.drawChessboardCorners(frame, pattern_size, corners, ret)
             start_frame = cv.putText(pattern_frame, "Press space to find chessboard corners; s to skip to skip current frame; q to quit",(100, 100), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 3, 1)
             display_frames.append((start_frame, corners))
 
@@ -89,6 +85,10 @@ def single_camera_calibrate(cam_id, count, path, pattern_size=(7, 7), single_ori
     per_view_refined = per_view_errors[per_view_errors < refine_val]
     indexes = np.array([np.argwhere(per_view_errors == a) for a in per_view_refined])
     indexes = indexes.reshape(-1)
+    print("Indexes below threshold: ", len(indexes))
+    if len(indexes)  < 3:
+        print("Too little sample size, consider increasing the refine param")
+        return ret
     world_points = np.array(world_points)
     selected_corners = np.array(selected_corners)
     world_refined_points = world_points[indexes, :]
@@ -109,15 +109,15 @@ def single_camera_calibrate(cam_id, count, path, pattern_size=(7, 7), single_ori
     return ret
 
 
-def single_camera_pose_estimation(cam_id, pattern_size=(7, 7)):
-    cc = np.load('intrinsics/f_30_128_1408/camera_calibration_{}.npz'.format(cam_id))
+def single_camera_pose_estimation(cam_id, pattern_size=(7, 7), dir=None):
+    cc = np.load('intrinsics/{}/camera_calibration_{}.npz'.format(cam_id))
     mtx, dist = cc['calibration_mtx'], cc['dist']
     cap = cv.VideoCapture(cam_id)
 
+    #TO-DO: Config-file
     cap.set(cv.CAP_PROP_FRAME_WIDTH, 1920)
     cap.set(cv.CAP_PROP_FRAME_HEIGHT, 1080)
 
-  
     if not cap.isOpened():
         print("Cannot open camera")
         exit()
@@ -126,7 +126,6 @@ def single_camera_pose_estimation(cam_id, pattern_size=(7, 7)):
     wp[:, :2] = np.mgrid[:pattern_size[0], :pattern_size[1]].T.reshape(-1, 2)
     while True:
         ret, frame = cap.read()
-        g_frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
         key = cv.waitKey(1)
         
         if not ret:
@@ -137,9 +136,8 @@ def single_camera_pose_estimation(cam_id, pattern_size=(7, 7)):
             break
 
         # detect chessboard
-        ret, corners = cv.findChessboardCorners(frame, pattern_size)
+        ret, _, corners = get_CB_corners(frame, pattern_size)
         if ret:
-            cv.cornerSubPix(g_frame, corners, (11, 11), (-1, -1), (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_COUNT, 30, 1e-6))
             projected_axis = project_axis(wp, corners, mtx, dist)
             pose_image = draw_pose(frame, corners[0], projected_axis)
             cv.imshow("Pose", pose_image)

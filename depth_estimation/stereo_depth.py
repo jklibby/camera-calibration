@@ -1,9 +1,9 @@
 import numpy as np
 import cv2 as cv
 import json
-import os
-from utils import checkerboard_orientation
-from stereo_distance import get_3d_points
+import time
+from depth_estimation.stereo_distance import get_3d_points
+from utils import get_CB_corners
 
 def get_stereo_depth(count, path):
     remaps = np.load('stereo-rectified-maps.npz')
@@ -107,6 +107,7 @@ def get_stereo_depth(count, path):
     stereo_save["minDisparity"] = stereo.getMinDisparity()
     json.dump(stereo_save, file)
 
+# TO-DO: rewrite
 def live_stereo_depth(left_cam, right_cam, baseline=25/1000):
     ret, stereo = create_stereo_object()
     if not ret:
@@ -121,6 +122,7 @@ def live_stereo_depth(left_cam, right_cam, baseline=25/1000):
     left_cap = cv.VideoCapture(left_cam)
     right_cap = cv.VideoCapture(right_cam)
 
+    #TO-DO: Load from config
     left_cap.set(cv.CAP_PROP_FRAME_WIDTH, 1920)
     left_cap.set(cv.CAP_PROP_FRAME_HEIGHT, 1080)
 
@@ -132,10 +134,8 @@ def live_stereo_depth(left_cam, right_cam, baseline=25/1000):
         print("Cannot read video frames")
         exit()
     
-    poi = POICollection(window="Depth")
 
     cv.namedWindow("Left Frame | Disparity | Depth Map")
-    cv.setMouseCallback("Left Frame | Disparity | Depth Map", poi.add)
     
     hold = False
     while True:
@@ -159,11 +159,6 @@ def live_stereo_depth(left_cam, right_cam, baseline=25/1000):
             right_cap.release()
             break
         
-        if hold:
-            cv.imshow("Left Frame | Disparity | Depth Map", depth)
-            if len(poi.collection) > 0:
-                print(depth[poi.collection[-1]])
-            continue
         left_frame_rect = cv.remap(left_frame, left_map_x, left_map_y, cv.INTER_LANCZOS4)
         right_frame_rect = cv.remap(right_frame, right_map_x, right_map_y, cv.INTER_LANCZOS4)
         left_frame_rect = cv.cvtColor(left_frame_rect, cv.COLOR_BGR2GRAY)
@@ -229,17 +224,18 @@ def get_object_measurement(left_cam, right_cam, pattern, dir):
         left_frame_rect = cv.remap(left_frame, left_map_x, left_map_y, cv.INTER_LANCZOS4)
         right_frame_rect = cv.remap(right_frame, right_map_x, right_map_y, cv.INTER_LANCZOS4)
 
-        lret_corners, lcorners = cv.findChessboardCorners(left_frame, (10, 7))
-        rret_corners, rcorners = cv.findChessboardCorners(right_frame, (10, 7))
+        lret_corners, lcorners = cv.findChessboardCorners(left_frame_rect, pattern)
+        rret_corners, rcorners = cv.findChessboardCorners(right_frame_rect, pattern)
         text_left_frame_rect = cv.putText(left_frame_rect.copy(), "{} - {}".format(lret_corners, rret_corners), (100, 100), cv.FONT_HERSHEY_DUPLEX, 2, (0, 0, 255), 3)
         if lret_corners and rret_corners:
-            ldir, rdir = checkerboard_orientation(lcorners), checkerboard_orientation(rcorners)
-            if ldir == rdir:
-                print(ldir)
-                p1, p2 = lcorners[0:3], rcorners[0:3]
-                pcd = get_3d_points(p1, p2, dir)
-                world_scaling = 1.5
-                return 2 * world_scaling - np.linalg.norm(pcd[0] - pcd[-1]) * world_scaling# test grid dimension
+            p1, p2 = lcorners, rcorners
+            pcd = get_3d_points(p1, p2, dir)
+            cv.imwrite("validation_cb_0.png", left_frame_rect)
+            cv.imwrite("validation_cb_1.png", right_frame_rect)
+            world_scaling = 1.5
+            # TO-DO - Load world scaling or calculate it?
+            np.save("3d_corners_checkerboard".format(time.asctime()), pcd)
+            return np.linalg.norm(pcd[0] - pcd[-1]) * world_scaling# test grid dimension
                 
         cv.imshow("Left Recitfied Images", left_frame_rect)
         cv.imshow("Right Recitfied Images", right_frame_rect)
@@ -256,3 +252,28 @@ def get_object_measurement(left_cam, right_cam, pattern, dir):
             right_cap.release()
             break
     return 0
+
+
+def get_checkerboard_3d(count, pattern, dir):
+    remaps = np.load('extrinsics/{}/stereo-rectified-maps.npz'.format(dir))
+    left_map_x, left_map_y, right_map_x, right_map_y = remaps['left_map_x'], remaps['left_map_y'], remaps['right_map_x'], remaps['right_map_y']
+    
+    # load paired images
+    images = [('paired_images/camera0_{}.png'.format(cap_count), 'paired_images/camera1_{}.png'.format(cap_count)) for cap_count in range(count)]
+    corners = list()
+    for li, ri in images:
+        left_frame = cv.imread(li)
+        right_frame = cv.imread(ri)
+
+        # apply rectification
+        left_frame_rect = cv.remap(left_frame, left_map_x, left_map_y, cv.INTER_LANCZOS4)
+        right_frame_rect = cv.remap(right_frame, right_map_x, right_map_y, cv.INTER_LANCZOS4)
+
+        # detect checkerboards
+        lret, _, left_corner = get_CB_corners(left_frame_rect, pattern)
+        rret, _, right_corner = get_CB_corners(right_frame_rect, pattern)
+        if lret and rret:
+            corner_pcd = get_3d_points(left_corner, right_corner, dir)
+            corners.append(corner_pcd)
+    
+    return np.array(corners)

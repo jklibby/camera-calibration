@@ -3,7 +3,7 @@ import cv2 as cv
 import os
 from pprint import pprint
 
-from utils import checkerboard_orientation
+from utils.calibration import get_CB_corners
 
 
 def stereo_camera_calibrate(count, path, pattern_size=(7, 7), flags=None, dir=None, skip_gui=False, refine_val=1):
@@ -31,15 +31,9 @@ def stereo_camera_calibrate(count, path, pattern_size=(7, 7), flags=None, dir=No
         left_g_frame = cv.cvtColor(left_frame, cv.COLOR_BGR2GRAY)
         right_g_frame = cv.cvtColor(right_frame, cv.COLOR_BGR2GRAY)
 
-        left_ret, left_corners = cv.findChessboardCorners(left_g_frame, pattern_size)
-        right_ret, right_corners = cv.findChessboardCorners(right_g_frame, pattern_size)
+        left_ret, left_pattern_frame, left_corners = get_CB_corners(left_frame, pattern_size)
+        right_ret, right_pattern_frame,  right_corners = get_CB_corners(right_frame, pattern_size)
         if left_ret and right_ret:
-            cv.cornerSubPix(left_g_frame, left_corners, (9, 9), (-1, -1), criteria)
-            cv.cornerSubPix(right_g_frame, right_corners, (9, 9), (-1, -1), criteria)
-            
-            left_pattern_frame = cv.drawChessboardCorners(left_frame, pattern_size, left_corners, left_ret)
-            right_pattern_frame = cv.drawChessboardCorners(right_frame, pattern_size, right_corners, right_ret)
-            
             left_start_frame = cv.putText(left_pattern_frame, "Press space to find chessboard corners; s to skip to skip current frame; q to quit; Index: {}".format(index),(100, 100), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 3, 1)
             right_start_frame = cv.putText(right_pattern_frame, "Press space to find chessboard corners; s to skip to skip current frame; q to quit; Index: {}".format(index),(100, 100), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 3, 1)
             
@@ -119,11 +113,13 @@ def stereo_camera_calibrate(count, path, pattern_size=(7, 7), flags=None, dir=No
     
     per_view_errors = np.array(per_view_errors)
     # refine stereo calibration by excluding calibration with high error
-    pi_1 = per_view_errors[per_view_errors[:, 0] < 1]
+    pi_1 = per_view_errors[per_view_errors[:, 0] < refine_val]
     pi = pi_1[pi_1[:, 1] < 1]
 
     indexes = np.array([np.argwhere(per_view_errors[:, 0] == a[0]) for a in pi])
     indexes = indexes.reshape(-1)
+    #TO-DO; load from config file
+    print("Indexes below threshold: ", len(indexes))
     if len(indexes) < 15:
         print("Not enough images to calculate refined stereo")
         return ret
@@ -132,7 +128,6 @@ def stereo_camera_calibrate(count, path, pattern_size=(7, 7), flags=None, dir=No
     world_points = np.array(world_points)
 
     left_refined_corners, right_refined_corners, world_refined_corners = left_selected_corners[indexes, :], right_selected_corners[indexes, :], world_points[indexes, :]
-    print(left_refined_corners.shape, right_refined_corners.shape, world_refined_corners.shape)
     ret, cm1, dist1, cm2, dist2, R, T, E, F = cv.stereoCalibrate(world_refined_corners, left_refined_corners,  right_refined_corners, left_cam_mtx, left_dist, right_cam_mtx, right_dist, image_size, criteria=criteria, flags=flags)
     print("Refined Stereo RMSE: ", ret)
     print("Baseline: {0:3f} cm | ".format(np.linalg.norm(T) * 1.5))
@@ -141,7 +136,7 @@ def stereo_camera_calibrate(count, path, pattern_size=(7, 7), flags=None, dir=No
     return ret
 
 
-def stereo_rectification(count, path, flags=(), dir=None, skip_gui=True):
+def stereo_rectification(count, path, flags=(), dir=None, skip_gui=False):
     rectified_dir = 'rectified_images'
     if dir:
         rectified_dir = "{}/{}".format(rectified_dir, dir)
@@ -192,6 +187,7 @@ def stereo_rectification(count, path, flags=(), dir=None, skip_gui=True):
     index = 0
     left_frame = cv.imread(images[index][0])
     right_frame = cv.imread(images[index][1])
+    # TO-DO: Load interpolation from a config file
     left_frame_rect = cv.remap(left_frame, left_map_x, left_map_y, cv.INTER_LANCZOS4)
     right_frame_rect = cv.remap(right_frame, right_map_x, right_map_y, cv.INTER_LANCZOS4)
     rect_image = np.hstack([left_frame_rect, right_frame_rect])
@@ -203,7 +199,7 @@ def stereo_rectification(count, path, flags=(), dir=None, skip_gui=True):
         x = interval*i
         rect_image = cv.line(rect_image, (0, x), (width*2, x), (0, 255, 0))
     while True:
-        cv.imshow("Rectified", rect_image)
+        cv.imshow("Rectified Image", rect_image)
         key = cv.waitKey(1)
         if key & 0xFF == ord('q'):
             break
@@ -225,9 +221,4 @@ def stereo_rectification(count, path, flags=(), dir=None, skip_gui=True):
                 rect_image = cv.line(rect_image, (0, x), (width*2, x), (0, 255, 0))
     cv.destroyAllWindows()
 
-
-
-def stereo_reprojection_error():
-    "Calculate the stereo reprojection for left camera and right camera"
-    pass
 
