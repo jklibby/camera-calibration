@@ -11,6 +11,7 @@ venv
 *.npz
 *.npy
 *.ipynb
-
+*.yaml
+*.yml
 *.png
 *.json

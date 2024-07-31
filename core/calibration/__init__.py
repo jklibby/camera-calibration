@@ -1,3 +1,3 @@
-from .camera_calibration import single_camera_calibrate, single_camera_pose_estimation
+from .camera_calibration import single_camera_calibrate, single_camera_rectification
 from .capture_images import capture_single_image, capture_paired_images
 from .stereo_calibration import stereo_camera_calibrate, stereo_rectification
