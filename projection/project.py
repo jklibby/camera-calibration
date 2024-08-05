@@ -36,13 +36,9 @@ def measure_checkerboard(opts: CheckboardProjectionOptions)-> Tuple[np.ndarray, 
             lret_corners, _, lcorners = get_CB_corners(left_frame_rect, pattern)
             rret_corners, _, rcorners = get_CB_corners(right_frame_rect, pattern)
             if lret_corners and rret_corners:
-                p1, p2 = lcorners, rcorners
-                pcd = get_point_cloud(p1, p2, opts)
-                edge_points = [pcd[0], pcd[pattern[0] - 1], pcd[np.prod(pattern) - pattern[0]]]
-
-                width = np.linalg.norm(edge_points[0] - edge_points[1]) * opts.world_scaling
-                height = np.linalg.norm(edge_points[0] - edge_points[2]) * opts.world_scaling
-                print((width, height))
+                pcd = get_point_cloud(lcorners, rcorners, opts)
+                width, height = _get_width_height(pcd, pattern)
+                print(width, height)
                 dimensions.append((width, height))
                 pcd_list.append(pcd)
                 
@@ -82,6 +78,8 @@ def get_checkerboard_pcd(opts: CheckboardProjectionOptions) -> np.ndarray:
         rret, _, right_corner = get_CB_corners(right_frame_rect, pattern)
         if lret and rret:
             corner_pcd = get_point_cloud(left_corner, right_corner, opts)
+            width, height = _get_width_height(corner_pcd, pattern)
+            print(width, height)
             corners.append(corner_pcd)
     
     return np.array(corners)
@@ -122,3 +120,11 @@ def _triangulate(P1, P2, point1, point2):
 
     return Vh[3,0:3]/Vh[3,3]
 
+
+def _get_width_height(corner_pcd, pattern):
+    print(corner_pcd.shape)
+    edge_points = [corner_pcd[0], corner_pcd[pattern[0] - 1], corner_pcd[np.prod(pattern) - pattern[0]]]
+
+    width = np.linalg.norm(edge_points[0] - edge_points[1])
+    height = np.linalg.norm(edge_points[0] - edge_points[2])
+    return width, height

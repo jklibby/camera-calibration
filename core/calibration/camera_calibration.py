@@ -5,7 +5,7 @@ from pathlib import Path
 
 from options import SingleCameraCalibrateOptions
 from utils.calibration import get_CB_corners
-from visualization import visualize_errors
+from visualization import visualize_errors, Thresholder
 
 def single_camera_calibrate(opts: SingleCameraCalibrateOptions) -> float:
     # read all the images
@@ -22,6 +22,7 @@ def single_camera_calibrate(opts: SingleCameraCalibrateOptions) -> float:
 
     wp = np.zeros((np.prod(pattern_size), 3), dtype=np.float32)
     wp[:, :2] = np.mgrid[:pattern_size[0], :pattern_size[1]].T.reshape(-1, 2)
+    wp *= 1.5
 
     images = opts.load_single_images()
     world_points = list()
@@ -88,11 +89,12 @@ def single_camera_calibrate(opts: SingleCameraCalibrateOptions) -> float:
     # mtx, _ = cv.getOptimalNewCameraMatrix(mtx, dist, (width, height), 1, (width, height))
     np.savez('{}/camera_calibration_{}'.format(intrinsics_dir, cam_id), calibration_mtx=mtx, dist=dist, rvecs=rvecs, tvecs=tvecs)
 
+    thresholder = Thresholder()
     if not opts.headless:
-        visualize_errors(cam_id, per_view_errors)
+        visualize_errors(thresholder, cam_id, per_view_errors)
     if not opts.error_threshold:
         return ret
-    per_view_refined = per_view_errors[per_view_errors < opts.error_threshold]
+    per_view_refined = per_view_errors[per_view_errors < thresholder.threshold]
     indexes = np.array([np.argwhere(per_view_errors == a) for a in per_view_refined])
     indexes = indexes.reshape(-1)
     print("Indexes below threshold: ", len(indexes))
@@ -107,7 +109,7 @@ def single_camera_calibrate(opts: SingleCameraCalibrateOptions) -> float:
     refined_ret, mtx, dist, rvecs, tvecs = cv.calibrateCamera(world_refined_points, selected_corners_refined, (width, height), None, None, flags=opts.flags, criteria=opts.criteria)
     
     if not opts.headless:
-        visualize_errors(cam_id, per_view_refined)
+        visualize_errors(thresholder, cam_id, per_view_refined)
     
     print("{} - Refined RMSE: ".format(cam_id), refined_ret)
     print(mtx)

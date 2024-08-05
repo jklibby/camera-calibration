@@ -5,7 +5,7 @@ from pathlib import Path
 
 from options import StereoCameraCalibrationOptions, StereoCameraRectificationOptions
 from utils.calibration import get_CB_corners
-from visualization import visalize_stereo_errors
+from visualization import visualize_stereo_errors, Thresholder
 
 
 def stereo_camera_calibrate(opts: StereoCameraCalibrationOptions):
@@ -22,6 +22,7 @@ def stereo_camera_calibrate(opts: StereoCameraCalibrationOptions):
     pattern_size = opts.pattern_size
     wp = np.zeros((np.prod(pattern_size), 3), dtype=np.float32)
     wp[:, :2] = np.mgrid[:pattern_size[0], :pattern_size[1]].T.reshape(-1, 2)
+    wp *= 1.5
 
     left_cam, right_cam = opts.left_cam_id, opts.right_cam_id
     count = opts.count
@@ -33,7 +34,8 @@ def stereo_camera_calibrate(opts: StereoCameraCalibrationOptions):
     for index, image in enumerate(images):
         left_frame = cv.imread(image[0])
         right_frame = cv.imread(image[1])
-        image_size = (left_frame.shape[1], left_frame.shape[0])
+        height, width = (left_frame.shape[0], left_frame.shape[1])
+        image_size = [width, height]
         
         left_ret, left_pattern_frame, left_corners = get_CB_corners(left_frame, pattern_size)
         right_ret, right_pattern_frame,  right_corners = get_CB_corners(right_frame, pattern_size)
@@ -95,37 +97,35 @@ def stereo_camera_calibrate(opts: StereoCameraCalibrationOptions):
     right_cam_mtx = intrinsic_data_1['calibration_mtx']
     right_dist = intrinsic_data_1['dist']
 
-    
     ret, cm1, dist1, cm2, dist2, R, T, E, F = cv.stereoCalibrate(world_points, left_selected_corners,  right_selected_corners, left_cam_mtx, left_dist, right_cam_mtx, right_dist, image_size, criteria=criteria, flags=opts.flags)
     ret, cm1, dist1, cm2, dist2, R, T, E, F, rvecs, tvecs, per_view_errors = cv.stereoCalibrateExtended(world_points, left_selected_corners,  right_selected_corners, left_cam_mtx, left_dist, right_cam_mtx, right_dist, image_size, R, T, criteria=criteria, flags=opts.flags)
         
     print("Stereo RMSE: ", ret)
-    print("Baseline: {0:3f} cm | ".format(np.linalg.norm(T) * 1.5))
+    print("Baseline: {0:3f} cm | ".format(np.linalg.norm(T)))
     stereo_calibration_path = str(extrinsics_dir.joinpath("stereo_calibration").absolute())
     np.savez(stereo_calibration_path, R=R, T=T, E=E, F=F, image_size=image_size)
 
+    thresholder = Thresholder(opts.error_threshold)
     if not opts.headless:
-        visalize_stereo_errors(per_view_errors)
-
-    if not opts.error_threshold:
-        return ret
+        visualize_stereo_errors(thresholder, per_view_errors)
     
-    per_view_errors = np.array(per_view_errors)
+    indexes = np.arange(len(per_view_errors)).reshape(-1, 1)
+    per_view_errors = np.hstack([per_view_errors, indexes])
     # refine stereo calibration by excluding calibration with high error
-    pi_1 = per_view_errors[per_view_errors[:, 0] < opts.error_threshold]
-    pi = pi_1[pi_1[:, 1] < opts.error_threshold]
-
-
+    pi_1 = per_view_errors[per_view_errors[:, 0] < thresholder.threshold]
+    pi = pi_1[pi_1[:, 1] < thresholder.threshold]
+    indexes_below_threshold = np.array(pi[:, 2], dtype=np.uint8)
+    
     if not opts.headless:
         index = 0 
         opts.cv_options.named_window("Left Frame")
         opts.cv_options.named_window("Right Frame")
 
-        while index < len(pi):
-            left_error_frame = left_display_frames[selected_index[index]][0]
-            right_error_frame = right_display_frames[selected_index[index]][0]
-            left_error_frame = cv.putText(left_error_frame, "Error: {}".format(per_view_errors[index]), (100, 200), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 3, 1)
-            right_error_frame = cv.putText(right_error_frame, "Error: {}".format(per_view_errors[index]), (100, 200), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 3, 1)
+        while index < len(indexes_below_threshold):
+            left_error_frame = left_display_frames[indexes_below_threshold[index]][0]
+            right_error_frame = right_display_frames[indexes_below_threshold[index]][0]
+            left_error_frame = cv.putText(left_error_frame, "Error: {}".format(per_view_errors[indexes_below_threshold[index]][:2]), (100, 200), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 3, 1)
+            right_error_frame = cv.putText(right_error_frame, "Error: {}".format(per_view_errors[indexes_below_threshold[index]][:2]), (100, 200), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 3, 1)
             cv.imshow("Right Frame", right_error_frame)
             cv.imshow("Left Frame", left_error_frame)
             key  = cv.waitKey(1)
@@ -136,23 +136,18 @@ def stereo_camera_calibrate(opts: StereoCameraCalibrationOptions):
         
         cv.destroyAllWindows()
 
-    if not opts.headless:
-        visalize_stereo_errors(pi)
-    indexes = np.array([np.argwhere(per_view_errors[:, 0] == a[0]) for a in pi])
-    indexes = indexes.reshape(-1)
-    #TO-DO; load from config file
-    print("Indexes below threshold: ", len(indexes))
-    if len(indexes) < 15:
+    print("Indexes below threshold: ", len(indexes_below_threshold))
+    if len(indexes_below_threshold) < 15:
         print("Not enough images to calculate refined stereo")
         return ret
     left_selected_corners = np.array(left_selected_corners)
     right_selected_corners = np.array(right_selected_corners)
     world_points = np.array(world_points)
 
-    left_refined_corners, right_refined_corners, world_refined_corners = left_selected_corners[indexes, :], right_selected_corners[indexes, :], world_points[indexes, :]
+    left_refined_corners, right_refined_corners, world_refined_corners = left_selected_corners[indexes_below_threshold, :], right_selected_corners[indexes_below_threshold, :], world_points[indexes_below_threshold, :]
     refined_ret, cm1, dist1, cm2, dist2, R, T, E, F = cv.stereoCalibrate(world_refined_corners, left_refined_corners,  right_refined_corners, left_cam_mtx, left_dist, right_cam_mtx, right_dist, image_size, criteria=criteria, flags=opts.flags)
     print("Refined Stereo RMSE: ", refined_ret)
-    print("Baseline: {0:3f} cm | ".format(np.linalg.norm(T) * 1.5))
+    print("Baseline: {0:3f} cm | ".format(np.linalg.norm(T)))
     if refined_ret < ret:
         ret = refined_ret
         np.savez(stereo_calibration_path, R=R, T=T, E=E, F=F, image_size=image_size)
@@ -195,8 +190,10 @@ def stereo_rectification(opts: StereoCameraRectificationOptions):
         image_size, 
         R, T,
         None, None, None, None, 
+        alpha=0,
         flags=opts.flags
     )
+    print("rectification image size", image_size)
     left_map_x, left_map_y = cv.initUndistortRectifyMap(left_cam_mtx, left_dist, left_rect, left_proj, image_size, cv.CV_32FC1)
     right_map_x, right_map_y = cv.initUndistortRectifyMap(right_cam_mtx, right_dist, right_rect, right_proj, image_size, cv.CV_32FC1)
 

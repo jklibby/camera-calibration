@@ -15,7 +15,7 @@ from options import SingleCameraCaptureOptions, SingleCameraCalibrateOptions, St
 from options import CheckboardProjectionOptions, CheckboardProjectionType, DepthEsitmationOptions
 from projection import measure_checkerboard, get_checkerboard_pcd
 from visualization import CalibrationVisualizer
-from depth_estimation.stereo_depth import get_stereo_depth
+from depth_estimation.stereo_depth import get_stereo_depth, get_live_stereo_depth
 
 
 class CalibratorConfig(TypedDict):
@@ -86,7 +86,7 @@ class StereoCalibrator:
             count=calibrator.stereo_rectification.count, 
             extrinsics_dir=calibrator.stereo_rectification.extrinsic_dir, 
             paired_images_path=calibrator.stereo_rectification.paired_images_path, 
-            cv_options=c.cv_options)
+            cv_options=calibrator.cv_options)
         return calibrator
 
     def calibrate_single_camera(self, opts: SingleCameraCalibrateOptions, capture_images:bool=False, flags: int|None=None, criteria:int|None=None):
@@ -134,9 +134,9 @@ class StereoCalibrator:
         viz.display_scene(corners_pcd)
 
 criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 100, 1e-5)
-left_single_flags = (cv.CALIB_RATIONAL_MODEL + cv.CALIB_FIX_K4 + cv.CALIB_FIX_K5)
-right_single_flags = (cv.CALIB_RATIONAL_MODEL )
-paired_flags = (cv.CALIB_FIX_INTRINSIC + cv.CALIB_ZERO_DISPARITY + cv.CALIB_RATIONAL_MODEL)
+left_single_flags = (cv.CALIB_FIX_TANGENT_DIST)
+right_single_flags =  (cv.CALIB_FIX_TANGENT_DIST)
+paired_flags = (cv.CALIB_FIX_INTRINSIC + cv.CALIB_ZERO_DISPARITY + cv.CALIB_FIX_TANGENT_DIST)
 
 c = StereoCalibrator.from_yaml("calibrator_config.yaml")
 c.calibrate_single_camera(c.left_camera_calibrate, flags=left_single_flags, criteria=criteria)
@@ -146,10 +146,8 @@ c.calibrate_stereo_camera(capture_images=False, flags=paired_flags, criteria=cri
 c.stereo_rectify()
 
 c.visualize_checkerboards()
-
 corners, dim = c.measure_checkerboard()
 
-corners, dims = c.measure_checkerboard()
 c.visualize_checkerboards(corners)
 
-c.tune_dispairty()
+# c.tune_dispairty()

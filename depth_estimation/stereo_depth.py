@@ -2,21 +2,37 @@ import numpy as np
 import cv2 as cv
 from typing import *
 from pathlib import Path
-import jsonpickle
+from datetime import datetime
 
 from options import DepthEsitmationOptions
 
-def create_trackbar(name):
+def create_trackbar(name:str, stereo: cv.StereoBM):
+    nothing = lambda x: ()
+    cv.namedWindow(name,cv.WINDOW_NORMAL)
+    cv.resizeWindow(name, 600,600)
+    
+    cv.createTrackbar('numDisparities', name,int(stereo.getNumDisparities() / 16), 50,nothing)
+    cv.createTrackbar('blockSize',name,int((stereo.getBlockSize() - 5) / 2),50,nothing)
+    cv.createTrackbar('preFilterType',name,stereo.getPreFilterType(),1,nothing)
+    cv.createTrackbar('preFilterSize',name,int((stereo.getBlockSize() - 5) / 2),50,nothing)
+    cv.createTrackbar('preFilterCap',name,stereo.getPreFilterCap(),50,nothing)
+    cv.createTrackbar('textureThreshold',name,stereo.getTextureThreshold(),100,nothing)
+    cv.createTrackbar('uniquenessRatio',name,stereo.getUniquenessRatio(),100,nothing)
+    cv.createTrackbar('speckleRange',name,stereo.getSpeckleRange(),100,nothing)
+    cv.createTrackbar('speckleWindowSize',name,int(stereo.getSpeckleWindowSize() / 2),50,nothing)
+    cv.createTrackbar('disp12MaxDiff',name,stereo.getDisp12MaxDiff(),50,nothing)
+    cv.createTrackbar('minDisparity',name,stereo.getMinDisparity(), 50,nothing)
+
+def create_trackbar_sgbm(name):
     nothing = lambda x: ()
     cv.namedWindow(name,cv.WINDOW_NORMAL)
     cv.resizeWindow(name, 600,600)
     
     cv.createTrackbar('numDisparities', name ,1, 50,nothing)
     cv.createTrackbar('blockSize',name,5,50,nothing)
-    cv.createTrackbar('preFilterType',name,0,1,nothing)
-    cv.createTrackbar('preFilterSize',name,2,25,nothing)
+    cv.createTrackbar('P1',name,1,10,nothing)
+    cv.createTrackbar('P2',name,1,50,nothing)
     cv.createTrackbar('preFilterCap',name,5,62,nothing)
-    cv.createTrackbar('textureThreshold',name,10,100,nothing)
     cv.createTrackbar('uniquenessRatio',name,15,100,nothing)
     cv.createTrackbar('speckleRange',name,0,100,nothing)
     cv.createTrackbar('speckleWindowSize',name,3,25,nothing)
@@ -26,6 +42,81 @@ def create_trackbar(name):
 
 def get_stereo_depth(opts: DepthEsitmationOptions):
     extrinsics_dir = ""
+    left_map_x, left_map_y, right_map_x, right_map_y = opts.load_remaps()
+    images = opts.load_paired_images()
+    index = 0
+
+    ret, stereo = load_stereo_object("stereo_bm_v1.yaml")
+    if not ret:
+        stereo: cv.StereoBM = cv.StereoBM_create()
+
+    ret, stereoSGBM = load_stereo_sgbm_object("stereo_sgbm_v1.yaml")
+    if not ret:
+        stereoSGBM: cv.StereoSGBM = cv.StereoSGBM_create()
+    
+    stereo_name = "stereo disparity map params"
+    sgbm_name = "sgbm disparity map params"
+    create_trackbar(stereo_name, stereo)
+    create_trackbar_sgbm(sgbm_name)
+    
+
+    left_frame = cv.imread(images[index][0])
+    right_frame = cv.imread(images[index][1])
+    left_frame_rect = cv.remap(left_frame, left_map_x, left_map_y, cv.INTER_LANCZOS4)
+    right_frame_rect = cv.remap(right_frame, right_map_x, right_map_y, cv.INTER_LANCZOS4)
+    
+    norm_stereo = lambda s, x: cv.normalize((x/16.0 - (s.getMinDisparity() / s.getNumDisparities())), None, alpha=0, beta=255, norm_type=cv.NORM_MINMAX, dtype=cv.CV_8U)
+    norm_sgbm_stereo = lambda stereo, x: cv.normalize(x, None, alpha=0, beta=255, norm_type=cv.NORM_MINMAX, dtype=cv.CV_8U)
+    stereo_disparity = get_stereo_disparity(stereo, left_frame_rect, right_frame_rect, norm_stereo)
+    SGBM_disparity = get_stereo_disparity(stereoSGBM, left_frame_rect, right_frame_rect, norm_stereo)
+    cv.imshow("SGBM Disparity", SGBM_disparity)
+    cv.imshow("Stereo Disparity", stereo_disparity)
+
+    while True:
+        key = cv.waitKey(1)
+        if key & 0xFF == ord(' '):
+            print("next image...")
+            left_frame = cv.imread(images[index][0])
+            right_frame = cv.imread(images[index][1])
+            left_frame_rect = cv.remap(left_frame, left_map_x, left_map_y, cv.INTER_LANCZOS4)
+            right_frame_rect = cv.remap(right_frame, right_map_x, right_map_y, cv.INTER_LANCZOS4)
+            
+            stereo_disparity = get_stereo_disparity(stereo, left_frame_rect, right_frame_rect, norm_stereo)
+            SGBM_disparity = get_stereo_disparity(stereoSGBM, left_frame_rect, right_frame_rect, norm_sgbm_stereo)
+            cv.imshow("SGBM Disparity", SGBM_disparity)
+            cv.imshow("Stereo Disparity", stereo_disparity)
+            index += 1
+            
+        
+        if key & 0xFF == ord('c'): 
+            stereo = update_stereo(stereo_name, stereo)
+            stereoSGBM = update_stere_sgbm(sgbm_name, stereoSGBM)
+            stereo_disparity = get_stereo_disparity(stereo, left_frame_rect, right_frame_rect, norm_stereo)
+            SGBM_disparity = get_stereo_disparity(stereoSGBM, left_frame_rect, right_frame_rect, norm_sgbm_stereo)
+
+            cv.imshow("SGBM Disparity", SGBM_disparity)
+            cv.imshow("Stereo Disparity", stereo_disparity)
+        
+        if key & 0xFF == ord('w'):
+            wls_filter_disparity = wlsfilter_disparity(left_frame_rect, right_frame_rect, stereo_disparity, stereo)
+            sgbm_wls_filter_disparity = wlsfilter_disparity(left_frame_rect, right_frame_rect, SGBM_disparity, stereoSGBM)
+            cv.imshow("SGBM Disparity", sgbm_wls_filter_disparity)
+            cv.imshow("Stereo Disparity", wls_filter_disparity)
+
+
+        
+        if key & 0xFF == ord('q'):
+            break
+
+        if index >= opts.count:
+            break
+
+    cv.destroyAllWindows()
+    write_stereo_object(stereo, file_name="stereo_bm.yaml")
+    write_stereo_object(stereoSGBM, file_name="stereo_sgbm.yaml")
+    
+
+def get_live_stereo_depth(opts: DepthEsitmationOptions):
     left_map_x, left_map_y, right_map_x, right_map_y = opts.load_remaps()
     images = opts.load_paired_images()
     index = 0
@@ -42,78 +133,73 @@ def get_stereo_depth(opts: DepthEsitmationOptions):
     ret, stereoSGBM = load_stereo_object("stereo_sgbm_disparity2.json")
     if not ret:
         stereoSGBM: cv.StereoSGBM = cv.StereoSGBM_create()
-    minDisparity, numDisparities = 5, 16
-    left_frame = cv.imread(images[index][0])
-    right_frame = cv.imread(images[index][1])
-    left_frame_rect = cv.remap(left_frame, left_map_x, left_map_y, cv.INTER_LANCZOS4)
-    right_frame_rect = cv.remap(right_frame, right_map_x, right_map_y, cv.INTER_LANCZOS4)
+    
+    opts.cv_options.named_window("Left Camera")
+    opts.cv_options.named_window("Right Camera")
+    opts.cv_options.named_window("Stereo BM Depth")
+    opts.cv_options.named_window("StereoSGBM Depth")
+
+    left_cap = cv.VideoCapture(opts.left_cam_id)
+    right_cap = cv.VideoCapture(opts.right_cam_id)
+
+
+    if (not left_cap.isOpened()) or (not right_cap.isOpened):
+        raise Exception("Error while start live stream")
     
     norm_stereo = lambda x: (x - stereo.getMinDisparity()) / stereo.getNumDisparities()
     norm_sgbm_stereo = lambda x: cv.normalize(x, None, alpha=0, beta=255, norm_type=cv.NORM_MINMAX, dtype=cv.CV_8U)
-    stereo_disparity = get_stereo_disparity(stereo, index, left_frame_rect, right_frame_rect, norm_sgbm_stereo)
-    SGBM_disparity = get_stereo_disparity(stereoSGBM, index, left_frame_rect, right_frame_rect, norm_sgbm_stereo)
-    cv.imshow("SGBM Disparity", SGBM_disparity)
-    cv.imshow("Stereo Disparity", stereo_disparity)
 
     while True:
-        key = cv.waitKey(1)
-        if key & 0xFF == ord(' '):
-            print("next image...")
-            left_frame = cv.imread(images[index][0])
-            right_frame = cv.imread(images[index][1])
-            left_frame_rect = cv.remap(left_frame, left_map_x, left_map_y, cv.INTER_LANCZOS4)
-            right_frame_rect = cv.remap(right_frame, right_map_x, right_map_y, cv.INTER_LANCZOS4)
-
-            stereo_disparity = get_stereo_disparity(stereo, index, left_frame_rect, right_frame_rect, norm_stereo)
-            SGBM_disparity = get_stereo_disparity(stereoSGBM, index, left_frame_rect, right_frame_rect, norm_sgbm_stereo)
-            cv.imshow("SGBM Disparity", SGBM_disparity)
-            cv.imshow("Stereo Disparity", stereo_disparity)
-            index += 1
-            
-        
-        if key & 0xFF == ord('c'): 
-            stereo = update_stereo(stereo_name, stereo)
-            stereoSGBM = update_stere_sgbm(sgbm_name, stereoSGBM)
-            stereo_disparity = get_stereo_disparity(stereo, index, left_frame_rect, right_frame_rect, norm_stereo)
-            SGBM_disparity = get_stereo_disparity(stereoSGBM, index, left_frame_rect, right_frame_rect, norm_sgbm_stereo)
-            cv.imshow("SGBM Disparity", SGBM_disparity)
-            cv.imshow("Stereo Disparity", stereo_disparity)
-
-        
-        if key & 0xFF == ord('q'):
+        lret, left_frame = left_cap.read()
+        rret, right_frame = right_cap.read()
+        if not (lret or rret):
             break
+        left_frame_rect = cv.remap(left_frame, left_map_x, left_map_y, cv.INTER_LANCZOS4)
+        right_frame_rect = cv.remap(right_frame, right_map_x, right_map_y, cv.INTER_LANCZOS4)
 
-        if index >= opts.count:
-            break
-
-    cv.destroyAllWindows()
-    write_stereo_object(stereo)
-    write_stereo_object(stereoSGBM, file_name="stereo_sgbm_disparity.json")
+        stereo_disparity = get_stereo_disparity(stereo, index, left_frame_rect, right_frame_rect, norm_sgbm_stereo)
+        SGBM_disparity = get_stereo_disparity(stereoSGBM, index, left_frame_rect, right_frame_rect, norm_sgbm_stereo)
+        cv.imshow("Left Camera", left_frame_rect)
+        cv.imshow("Right Camera", right_frame_rect)
+        cv.imshow("Stereo BM Depth", stereo_disparity)
+        cv.imshow("SGBM_disparity", SGBM_disparity)
     
+    cv.destroyAllWindows()
+    left_cap.release()
+    right_cap.release()
 
 def load_stereo_object(file_name) -> list[bool, cv.StereoBM]:
     try:
-        with open(file_name, "rb") as f:
-            data = f.read()
-            if not data:
-                False, None
-            return True, jsonpickle.decode(data)
-    except:
+        fs = cv.FileStorage(file_name, cv.FILE_STORAGE_READ)
+        sbm: cv.StereoBM = cv.StereoBM_create()
+        sbm.read(fs.getFirstTopLevelNode())
+        return True, sbm
+    except Exception as e:
+        print("err", e)
+        return False, None
+    
+def load_stereo_sgbm_object(file_name) -> list[bool, cv.StereoSGBM]:
+    try:
+        fs = cv.FileStorage(file_name, cv.FILE_STORAGE_READ)
+        sbm: cv.StereoSGBM = cv.StereoSGBM_create()
+        sbm.read(fs.getFirstTopLevelNode())
+        return True, sbm
+    except Exception as e: 
+        print("err", e)
         return False, None
 
 
-def write_stereo_object(obj: cv.StereoSGBM | cv.StereoBM, file_name="stereo_disparity.json"):
-    data = jsonpickle.encode(obj)
-    with open(file_name, 'w') as file:
-        file.write(data)
-        file.close()
+def write_stereo_object(obj: cv.StereoSGBM | cv.StereoBM, file_name:str):
+    obj.save(file_name)
 
-def get_stereo_disparity(stereo: cv.StereoBM | cv.StereoSGBM, index:int, left_frame_rect: np.ndarray, right_frame_rect:np.ndarray, normalize: Callable) -> np.ndarray:
-    disparity = stereo.compute(cv.cvtColor(left_frame_rect, cv.COLOR_BGR2GRAY), cv.cvtColor(right_frame_rect, cv.COLOR_BGR2GRAY))
-    disparity = normalize(disparity)
-    # disparity = cv.applyColorMap(disparity, cv.COLORMAP_JET)
-    disparity_text = cv.putText(disparity, "Index: {}. Press space to move to the next image. press q to quit".format(index),(100, 100), cv.FONT_HERSHEY_PLAIN, 2, (0, 255, 0), 1, 1)
-    return disparity_text
+def get_stereo_disparity(stereo: cv.StereoBM | cv.StereoSGBM, left_frame_rect: np.ndarray, right_frame_rect:np.ndarray, normalize: Callable) -> np.ndarray:
+    start = datetime.now()
+    left_frame_rect, right_frame_rect = pad_images(stereo.getNumDisparities(), left_frame_rect, right_frame_rect)
+    disparity = stereo.compute(left_frame_rect, right_frame_rect)
+    disparity = unpad_disparity(stereo.getNumDisparities(), disparity)
+    disparity = normalize(stereo, disparity)
+    print("FPS...", stereo, 1/(datetime.now()-start).total_seconds())
+    return disparity
 
 def update_stereo(name:str, stereo: cv.StereoBM):
     numDisparities = (cv.getTrackbarPos('numDisparities',name))*16
@@ -147,15 +233,14 @@ def update_stereo(name:str, stereo: cv.StereoBM):
 def update_stere_sgbm(name:str, stereo: cv.StereoSGBM):
     numDisparities = (cv.getTrackbarPos('numDisparities',name))*16
     blockSize = (cv.getTrackbarPos('blockSize',name))*2 + 5
-    preFilterCap = cv.getTrackbarPos('preFilterCap',name)
+    preFilterCap = cv.getTrackbarPos('preFilterCap', name)
     uniquenessRatio = cv.getTrackbarPos('uniquenessRatio',name)
     speckleRange = cv.getTrackbarPos('speckleRange',name)
     speckleWindowSize = cv.getTrackbarPos('speckleWindowSize',name)*2
     disp12MaxDiff = cv.getTrackbarPos('disp12MaxDiff',name)
     minDisparity = cv.getTrackbarPos('minDisparity',name)
-    P1 = 8 * 3 * blockSize ** 2
-    P2 = 32 * 3 * blockSize ** 2
-
+    P1 = cv.getTrackbarPos('P1', name)
+    P2 = cv.getTrackbarPos('P2', name)
     # Setting the updated parameters before computing disparity map
     stereo.setNumDisparities(numDisparities)
     stereo.setBlockSize(blockSize)
@@ -168,3 +253,31 @@ def update_stere_sgbm(name:str, stereo: cv.StereoSGBM):
     stereo.setDisp12MaxDiff(disp12MaxDiff)
     stereo.setMinDisparity(minDisparity)
     return stereo
+
+def pad_images(num_disparity:int, left_rect_image:np.ndarray, right_rect_image:np.ndarray):
+    left_rect_image, right_rect_image = cv.cvtColor(left_rect_image, cv.COLOR_BGR2GRAY), cv.cvtColor(right_rect_image, cv.COLOR_BGR2GRAY)
+    height = left_rect_image.shape[0]
+    padding = np.zeros((height, num_disparity), dtype=np.uint8)
+    left_rect_image = np.hstack([padding, left_rect_image])
+    right_rect_image = np.hstack([padding, right_rect_image])
+    return left_rect_image, right_rect_image
+
+def unpad_disparity(numDisparity:int, disparity: np.ndarray):
+    return disparity[:, numDisparity:]
+
+def wlsfilter_disparity(left_image:np.ndarray, right_image: np.ndarray, disparity: np.ndarray, stereo:cv.StereoBM):
+    disparity.dtype = np.uint8
+    start = datetime.now()
+    sigma = 1.5
+    lmbda = 8000.0
+    right_matcher = cv.ximgproc.createRightMatcher(stereo)
+    left_image, right_image = pad_images(right_matcher.getNumDisparities(), left_image, right_image)
+    right_disp = right_matcher.compute(right_image,left_image)
+    right_disp = unpad_disparity(right_matcher.getNumDisparities(), right_disp)
+
+    wls_filter = cv.ximgproc.createDisparityWLSFilter(stereo)
+    wls_filter.setLambda(lmbda)
+    wls_filter.setSigmaColor(sigma)
+    filtered_disp = wls_filter.filter(disparity, left_image, disparity_map_right=right_disp)
+    print("WLS...",stereo, (datetime.now()-start).total_seconds())
+    return filtered_disp
