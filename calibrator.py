@@ -100,9 +100,14 @@ class StereoCalibrator:
         opts.flags = flags
         opts.criteria = criteria
 
-        single_camera_calibrate(opts)
+        _, corners_3d = single_camera_calibrate(opts)
+        corners_3d = np.array(corners_3d)
         
         single_camera_rectification(opts)
+
+        if not opts.headless:
+            viz = CalibrationVisualizer(cams=1)
+            viz.display_scene(corners_3d)
     
     def calibrate_stereo_camera(self, capture_images:bool=True, flags:int|None=None, criteria: int|None=None):
         # capture paired images
@@ -150,4 +155,4 @@ corners, dim = c.measure_checkerboard()
 
 c.visualize_checkerboards(corners)
 
-# c.tune_dispairty()
+c.tune_dispairty()

@@ -120,7 +120,6 @@ def _triangulate(P1, P2, point1, point2):
 
     return Vh[3,0:3]/Vh[3,3]
 
-
 def _get_width_height(corner_pcd, pattern):
     print(corner_pcd.shape)
     edge_points = [corner_pcd[0], corner_pcd[pattern[0] - 1], corner_pcd[np.prod(pattern) - pattern[0]]]
@@ -128,3 +127,9 @@ def _get_width_height(corner_pcd, pattern):
     width = np.linalg.norm(edge_points[0] - edge_points[1])
     height = np.linalg.norm(edge_points[0] - edge_points[2])
     return width, height
+
+def project_world_to_camera(world_points, rvec, tvec):
+    ones = np.ones((world_points.shape[0], 1))
+    world_points_homogenous = np.hstack([world_points, ones])
+    R_t = np.hstack([cv.Rodrigues(rvec)[0], tvec])
+    return R_t.dot(world_points_homogenous.T).T

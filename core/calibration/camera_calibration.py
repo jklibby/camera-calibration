@@ -5,6 +5,7 @@ from pathlib import Path
 
 from options import SingleCameraCalibrateOptions
 from utils.calibration import get_CB_corners
+from projection import project_world_to_camera
 from visualization import visualize_errors, Thresholder
 
 def single_camera_calibrate(opts: SingleCameraCalibrateOptions) -> float:
@@ -88,19 +89,19 @@ def single_camera_calibrate(opts: SingleCameraCalibrateOptions) -> float:
 
     # mtx, _ = cv.getOptimalNewCameraMatrix(mtx, dist, (width, height), 1, (width, height))
     np.savez('{}/camera_calibration_{}'.format(intrinsics_dir, cam_id), calibration_mtx=mtx, dist=dist, rvecs=rvecs, tvecs=tvecs)
+    corners_3d = [project_world_to_camera(world_points[i], rvecs[i], tvecs[i]) for i in range(len(world_points))]
 
-    thresholder = Thresholder()
+    thresholder = Thresholder(opts.error_threshold)
     if not opts.headless:
         visualize_errors(thresholder, cam_id, per_view_errors)
-    if not opts.error_threshold:
-        return ret
+    
     per_view_refined = per_view_errors[per_view_errors < thresholder.threshold]
     indexes = np.array([np.argwhere(per_view_errors == a) for a in per_view_refined])
     indexes = indexes.reshape(-1)
     print("Indexes below threshold: ", len(indexes))
     if len(indexes)  < 10:
         print("Too little sample size, consider increasing the refine param")
-        return ret
+        return ret, corners_3d
     world_points = np.array(world_points)
     selected_corners = np.array(selected_corners)
     world_refined_points = world_points[indexes, :]
@@ -118,8 +119,8 @@ def single_camera_calibrate(opts: SingleCameraCalibrateOptions) -> float:
         ret = refined_ret
         # mtx, _ = cv.getOptimalNewCameraMatrix(mtx, dist, (width, height), 1, (width, height))
         np.savez('{}/camera_calibration_{}'.format(intrinsics_dir, cam_id), RMSE=refined_ret, calibration_mtx=mtx, dist=dist, rvecs=rvecs, tvecs=tvecs)
-
-    return ret
+        corners_3d = [project_world_to_camera(world_refined_points[i], rvecs[i], tvecs[i]) for i in range(len(world_refined_points))]
+    return ret, corners_3d
 
 
 def single_camera_rectification(opts: SingleCameraCalibrateOptions) -> None:

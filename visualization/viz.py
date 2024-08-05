@@ -113,21 +113,4 @@ def color_bar(length):
     return o3d.utility.Vector3dVector(color_variations)
  
 
-# cam_viz = CalibrationVisualizer(R=[np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])], T=[np.array([10, 0, 0])])
-
-# def test_corners():
-#     wp = np.zeros((np.prod((7, 5)), 3), dtype=np.float32)
-#     wp[:, :2] = np.mgrid[:7, :5].T.reshape(-1, 2)
-#     wp[:, 2] = -5
-#     wp[:, 0] += 2.5
-#     return wp
-
-
-# corners = np.load("3d_corners_checkerboard.npy")
-# objs = list()
-# objs.extend(checkerboard_lineset(corners))
-
-# print(objs)
-# cam_viz.display_scene(objects=objs)
-
 
