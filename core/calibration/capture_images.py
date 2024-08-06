@@ -61,6 +61,7 @@ def capture_single_image(opts: SingleCameraCaptureOptions):
             if cap_count >= count:
                 break
     cap.release()
+    cv.destroyAllWindows()
 
 def capture_paired_images(opts: StereoCameraCaptureOptions):
     dir = Path(opts.path)
@@ -87,12 +88,6 @@ def capture_paired_images(opts: StereoCameraCaptureOptions):
     opts.cv_options.named_window("Left Frame")
     opts.cv_options.named_window("Right Frame")
 
-    # cv.namedWindow("Left Frame", cv.WINDOW_NORMAL)
-    # cv.namedWindow("Right Frame", cv.WINDOW_NORMAL)
-
-    # cv.resizeWindow("Left Frame", opts.cv_options.window_size[0], opts.cv_options.window_size[1])
-    # cv.resizeWindow("Right Frame", opts.cv_options.window_size[0], opts.cv_options.window_size[1])
-    
     start_capture = False
     cooldown = 100
     cap_count = 0

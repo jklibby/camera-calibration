@@ -7,15 +7,18 @@ The calibration will depend on a (7x7) chessboard pattern.
 **Python Version - 3.10**
 
 ```
-Usage: main.py [OPTIONS]
+Usage: main.py [OPTIONS] CONFIG_FILE
 
 Options:
-  --capture-single INTEGER - Number of images to capture for single camera calibration
-  --capture-paired INTEGER - Number of images to capture for stereo camera calibration
-  --calibrate-camera INTEGER - Number of images to use to calibrate single camera calibration
-  --calibrate-stereo-camera INTEGER - Number of images to use to calibrate the stereo system
-  --stereo-depth INTEGER - Number of Images to find the depth map for
-  --help    
+  --full BOOLEAN                  Run the whole pipeline.
+  --capture-single-images BOOLEAN Capture images for single camera calibration.
+  --capture-stereo-images BOOLEAN Capture images for stereo camera calibration.
+  --calibrate-single-cameras BOOLEAN Calibrate single cameras.
+  --calibrate-stereo-cameras BOOLEAN Calibrate stereo cameras.
+  --rectify-stereo-cameras BOOLEAN Rectify stereo images.
+  --validate-calibration BOOLEAN  Measure the validation checkerboard with stereo calibration. Utilizes DLT.
+  --tune-disparity BOOLEAN        Tune BM and SGBM diaprity params for rectified images.
+  --help                          Show this message and exit.   
 ```
 
 The command below, will capture 10 single camera images for both the left camera and the right camera. It will then capture 10 paired images for both left camera and right camera. It will then use 10 images to calibration single camera, left and right. Then it will use 10 paired images to calibrate stereo cameras. After that it will display recitified images for the cameras. Then it will display Depth Maps with a wondow to calibrate hyperparameters. 
