@@ -46,8 +46,9 @@ def stereo_camera_calibrate(opts: StereoCameraCalibrationOptions):
             left_display_frames.append((left_start_frame, left_corners))
             right_display_frames.append((right_start_frame, right_corners))
 
-    opts.cv_options.named_window("Left Frame")
-    opts.cv_options.named_window("Right Frame")
+    if not opts.headless:
+        opts.cv_options.named_window("Left Frame")
+        opts.cv_options.named_window("Right Frame")
 
     left_selected_corners = []
     right_selected_corners = []
@@ -103,7 +104,7 @@ def stereo_camera_calibrate(opts: StereoCameraCalibrationOptions):
     print("Stereo RMSE: ", ret)
     print("Baseline: {0:3f} cm | ".format(np.linalg.norm(T)))
     stereo_calibration_path = str(extrinsics_dir.joinpath("stereo_calibration").absolute())
-    np.savez(stereo_calibration_path, R=R, T=T, E=E, F=F, image_size=image_size)
+    np.savez(stereo_calibration_path, RMSE=ret, R=R, T=T, E=E, F=F, image_size=image_size)
 
     thresholder = Thresholder(opts.error_threshold)
     if not opts.headless:
@@ -150,7 +151,7 @@ def stereo_camera_calibrate(opts: StereoCameraCalibrationOptions):
     print("Baseline: {0:3f} cm | ".format(np.linalg.norm(T)))
     if refined_ret < ret:
         ret = refined_ret
-        np.savez(stereo_calibration_path, R=R, T=T, E=E, F=F, image_size=image_size)
+        np.savez(stereo_calibration_path, RMSE=ret, R=R, T=T, E=E, F=F, image_size=image_size)
 
     return ret
 

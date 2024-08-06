@@ -6,82 +6,26 @@ cv_options:
   - 1280
   - 720
 
-left_camera_capture:
- cam_id: 0
+camera_capture:
+ left_cam_id: 0
+ right_cam_id: 1
  image_count: 50
  image_path: single_camera_images
-right_camera_capture:
- cam_id: 1
- image_count: 50
- image_path: single_camera_images
+ stereo_images_path: stereo_camera_images
+ stereo_images_count: 50
 
-stereo_camera_capture:
- left_cam_id: 0
- right_cam_id: 1
- path: stereo_camera_images
- count: 75
-
-left_camera_calibration:
- cam_id: 0
- count: 50
- image_path: single_camera_images
+camera_calibration:
+ intrinsic_params_dir: intrinsic_dir
+ extrinsic_params_dir: extrinsic_dir
  pattern_size:
   - 10
   - 7
- intrinsic_params_dir: camera_intrinsics
+ world_scaling: 1.5 
+ single_calibration_error_threshold: 0.3
+ stereo_calibration_error_threshold: 0.7
  headless: False
- error_threshold: 0.3
 
-right_camera_calibration:
- cam_id: 1
- count: 50
- image_path: single_camera_images
+validation:
  pattern_size:
   - 10
   - 7
- intrinsic_params_dir: camera_intrinsics
- headless: False
- error_threshold: 0.3
-
-stereo_camera_calibration:
- left_cam_id: 0
- right_cam_id: 1
- image_path: stereo_camera_images_2
- count: 50
- pattern_size:
-  - 10
-  - 7
- intrinsic_dir: camera_intrinsics
- extrinsics_dir: camera_extrinsics
- headless: False
- error_threshold: 0.7
- 
- 
-stereo_rectification:
- left_cam_id: 0
- right_cam_id: 1
- image_path: stereo_camera_images_2
- count: 50
- intrinsic_dir: camera_intrinsics
- extrinsic_dir: camera_extrinsics
- headless: false
- dir: rectified_stereo_images
-
- 
-#################################
-# Measurements and Visualization
-#################################
-cb_projection:
- left_cam_id: 0
- right_cam_id: 1
- paired_images_path: stereo_camera_images_2
- count: 50
- pattern_size:
-  - 10
-  - 7
- validation_pattern_size:
-  - 10
-  - 7
- intrinsics_dir: camera_intrinsics
- extrinsics_dir: camera_extrinsics
- world_scaling: 1.5

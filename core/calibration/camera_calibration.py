@@ -11,8 +11,8 @@ from visualization import visualize_errors, Thresholder
 def single_camera_calibrate(opts: SingleCameraCalibrateOptions) -> float:
     # read all the images
     intrinsics_dir = Path(opts.dir)
-    if not os.path.exists(opts.path):
-        raise Exception("Directory does not exists, capture images first")
+    if not Path(opts.path).absolute().exists():
+       raise Exception("{} : Directory does not exists, capture images first".format(opts.path))
     
     if not Path.exists(intrinsics_dir):
         Path.mkdir(intrinsics_dir, parents=True)
@@ -88,7 +88,7 @@ def single_camera_calibrate(opts: SingleCameraCalibrateOptions) -> float:
     print(dist)
 
     # mtx, _ = cv.getOptimalNewCameraMatrix(mtx, dist, (width, height), 1, (width, height))
-    np.savez('{}/camera_calibration_{}'.format(intrinsics_dir, cam_id), calibration_mtx=mtx, dist=dist, rvecs=rvecs, tvecs=tvecs)
+    np.savez('{}/camera_calibration_{}'.format(intrinsics_dir, cam_id), RMSE=ret, calibration_mtx=mtx, dist=dist, rvecs=rvecs, tvecs=tvecs)
     corners_3d = [project_world_to_camera(world_points[i], rvecs[i], tvecs[i]) for i in range(len(world_points))]
 
     thresholder = Thresholder(opts.error_threshold)

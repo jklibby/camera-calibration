@@ -18,7 +18,7 @@ class SingleCameraCaptureOptions:
     def __init__(self, cam_id: int, image_count: int, image_path: str, cv_options: CVCameraOptions) -> None:
         self.cam_id = cam_id
         self.count = image_count
-        self.path = '{}/{}'.format(image_path, cam_id)
+        self.path = str(Path('{}/{}'.format(image_path, cam_id)).absolute())
 
         self.cv_options = cv_options
 
@@ -38,11 +38,11 @@ class SingleCameraCalibrateOptions(SingleImageLoader):
         error_threshold: float | None=None, cv_options:CVCameraOptions=None) -> None:
         self.cam_id = cam_id
         self.count = count
-        self.path = image_path
+        self.path = str(Path(image_path).absolute())
         self.pattern_size = pattern_size
         self.flags = flags
         self.criteria = criteria
-        self.dir = intrinsic_params_dir
+        self.dir = str(Path(intrinsic_params_dir).absolute())
         self.headless = headless
         self.error_threshold = error_threshold
         
@@ -51,7 +51,7 @@ class SingleCameraCalibrateOptions(SingleImageLoader):
 class StereoCameraCalibrationOptions(PairedImageLoader):
     def __init__(self, left_cam_id:int, right_cam_id:int, count:int, 
             image_path:int, pattern_size:Tuple[int, int], flags:int=None,
-            intrinsic_dir:str=None, extrinsics_dir:str=None, headless:bool=False, criteria: int|None=None,
+            intrinsic_params_dir:str=None, extrinsic_params_dir:str=None, headless:bool=False, criteria: int|None=None,
             error_threshold:float=1, cv_options:CVCameraOptions=None) -> None:
         self.left_cam_id = left_cam_id
         self.right_cam_id = right_cam_id
@@ -61,8 +61,8 @@ class StereoCameraCalibrationOptions(PairedImageLoader):
         self.flags = flags
         self.criteria = criteria
         self.criteria = criteria
-        self.dir =  str(Path(extrinsics_dir).absolute())
-        self.intrinsics_dir =  str(Path(intrinsic_dir).absolute())
+        self.dir =  str(Path(extrinsic_params_dir).absolute())
+        self.intrinsics_dir =  str(Path(intrinsic_params_dir).absolute())
         self.headless = headless
         self.error_threshold = error_threshold
 
@@ -70,13 +70,13 @@ class StereoCameraCalibrationOptions(PairedImageLoader):
 
 
 class StereoCameraRectificationOptions(PairedImageLoader):
-    def __init__(self, count:int, left_cam_id:int, right_cam_id:int, image_path:str, dir:str, intrinsic_dir:str, extrinsic_dir:str, flags:Tuple[int, int]|None = None, headless:bool=False, cv_options:CVCameraOptions=None) -> None:
+    def __init__(self, count:int, left_cam_id:int, right_cam_id:int, image_path:str, intrinsic_params_dir:str, extrinsic_params_dir:str, flags:Tuple[int, int]|None = None, headless:bool=False, cv_options:CVCameraOptions=None) -> None:
         self.count = count
         self.left_cam_id = left_cam_id
         self.right_cam_id = right_cam_id
         self.paired_images_path =  str(Path(image_path).absolute())
-        self.intrinsic_dir = str(Path(intrinsic_dir).absolute())
-        self.extrinsic_dir = str(Path(extrinsic_dir).absolute())
+        self.intrinsic_dir = str(Path(intrinsic_params_dir).absolute())
+        self.extrinsic_dir = str(Path(extrinsic_params_dir).absolute())
         self.flags = flags
         self.headless = headless
 
