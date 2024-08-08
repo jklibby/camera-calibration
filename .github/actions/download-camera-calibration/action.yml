@@ -1,0 +1,16 @@
+name: 'Download Camera Calibration Images'
+description: 'Downloads for camera calibration tests'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Download file
+      run: |
+        python -m pip install gdown
+        mkdir test_images && cd test_images
+        gdown ${{ env.CC_FILE_ID }}
+        unzip *.zip
+        rm *.zip
+      shell: bash
+
+
