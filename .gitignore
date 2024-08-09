@@ -15,3 +15,5 @@ venv
 *.yml
 *.png
 *.json
+*.zip
+*~

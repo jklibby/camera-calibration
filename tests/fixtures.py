@@ -31,7 +31,14 @@ config_dict: CalibratorConfig = {
     }
 }
 
-
+##when pytest gets called, it will fist call fixturs.py
+##  and then calibration_yaml_fixture will be called
+##  then, later, when test_* gets called and calibration_yaml_fixture
+#     is passed in as it's parameter, it will return the yaml_file
+#     which is yielded here at the end of this function.
+#   The whole point of this is so that we can have this yaml file
+#     which only exists temporarily in this session.
+#   The values of that yaml file ar as defined in config_dict
 @pytest.fixture(scope="session")
 def calibration_yaml_fixture(tmp_path_factory):
     # dump config yaml into a tmp file

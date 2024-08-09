@@ -7,6 +7,21 @@ from calibrator import StereoCalibrator
 
 from .fixtures import calibration_yaml_fixture, config_dict
 
+
+#inputs
+#  calibration_yaml_fixture
+#    the yield value at end of calibration_yaml_fixture,
+#      which is the temporary yaml file that only exists in this scope
+#pseudocode
+#  perfroms intrinsic calibration on each camera
+#  perfroms extrinsic calibration
+#  loads intrinsic and extrinsic parameters from disc 
+#  for intrinsic
+#    check the shape of intrinsic params, which should be 3x3
+#    check if RMSE is below error threshold that we defined in config_dict
+#  for extrinsic
+#    check the shape of R and T
+#    check if RMSE is below error threshold that we defined in config_dict
 def test_calibrator(calibration_yaml_fixture):
     calibrator = StereoCalibrator.from_yaml(calibration_yaml_fixture)
 
