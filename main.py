@@ -14,17 +14,24 @@ from calibrator import StereoCalibrator
 @click.option('--validate-calibration', default=False, help="Measure the validation checkerboard with stereo calibration. Utilizes DLT.")
 @click.option('--tune-disparity', default=False, help="Tune BM and SGBM diaprity params for rectified images.")
 def run(config_file, full, capture_single_images, capture_stereo_images, calibrate_single_cameras, calibrate_stereo_cameras, rectify_stereo_cameras, validate_calibration, tune_disparity):
+    ##static function, returnes calibration object, c, with the config file loaded
     calibrator = StereoCalibrator.from_yaml(config_file)
+
     if calibrate_single_cameras or full:
         capture_single_images = capture_single_images or full
+        ##intrinsic calibration for left camera
+        ##  this calls cv.calibrateCamera and repojection_error
         calibrator.calibrate_single_camera(calibrator.left_camera_calibrate, capture_images=capture_single_images)
-        calibrator.calibrate_single_camera(calibrator.left_camera_calibrate, capture_images=capture_single_images)
+        ##intrinsic calibration for right camera
+        calibrator.calibrate_single_camera(calibrator.right_camera_calibrate, capture_images=capture_single_images)
     
     if calibrate_stereo_cameras or full:
+        ##extrinsic calibration
         calibrator.calibrate_stereo_camera(capture_images=(capture_stereo_images or full))
     
     if rectify_stereo_cameras or full:
-        calibrator.stereo_rectify()
+        ##rectification
+        calibrator.stereo_rectify() 
     
     if validate_calibration or full:
         calibrator.visualize_checkerboards()

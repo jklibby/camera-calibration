@@ -1,28 +1,41 @@
+#note about files read in:
+#  All of the "dir" or "path" variables below are relative paths,
+#    which are then ignored by git.
+
 cv_options:
- resolution:
+ resolution: #camera resolution
   - 1920
   - 1080
- window_size:
+ window_size: #display size
   - 1280
   - 720
 
 camera_capture:
  left_cam_id: 0
  right_cam_id: 1
- image_count: 50
- image_path: single_camera_images
- stereo_images_path: stereo_camera_images
+ image_count: 50 #intrinsic
+ image_path: single_camera_images #intrinsic
+ stereo_images_path: stereo_camera_images #3xtrinsic
  stereo_images_count: 50
 
 camera_calibration:
  intrinsic_params_dir: intrinsic_dir
  extrinsic_params_dir: extrinsic_dir
  pattern_size:
-  - 10
-  - 7
+  - 10 #nRows of checkerboard
+  - 7 #nCols
  world_scaling: 1.5 
  single_calibration_error_threshold: 0.3
  stereo_calibration_error_threshold: 0.7
+ #headless:
+ #  if headless mode (true) no GUI
+ #  If false, error_threshold is chosen interactively
+ #  helps a lot with minimizing error, but more important for stereo
+ #for camera_capture, there will allways be a GUI (headless will be True)
+ #for calibration, rectification, and validation
+ #  we often want GUI (headless false), for instance when we have human-in-the-loop
+ #    tuning of the error threshold for intrinsic or extrinsic calibration
+ #  but for unit tests, no GUI (headless True)
  headless: False
 
 validation:
