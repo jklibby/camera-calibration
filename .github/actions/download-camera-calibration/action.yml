@@ -4,7 +4,7 @@ description: 'Downloads for camera calibration tests'
 runs:
   using: "composite"
   steps:
-    - name: Download file
+    - name: Check cache for calibration images
       run: |
         python -m pip install gdown
         mkdir test_images && cd test_images

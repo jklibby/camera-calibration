@@ -1,10 +1,9 @@
 import open3d as o3d
 import numpy as np
 import matplotlib.pyplot as plt
-from pprint import pprint
-from branca.colormap import linear
+import matplotlib.cm as cm
 
-class CalibrationVisualizer():
+class Open3DCalibrationVisualizer():
     def __init__(self, cams=2, R=[], T=[]):
         self.cams = cams
         self.R = R
@@ -99,18 +98,9 @@ def checkerboard_lineset(corners):
     return [cb_lineset, corner_pcd]
 
 def color_bar(length):
-    colormap = getattr(linear, 'viridis').scale(0, 1)
-    lower_color = colormap(0)
-    upper_color = colormap(1)
-
-    def hex_to_rgb(hex_color):
-        hex_color = hex_color.lstrip('#')
-        return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
-
-    lower_color_rgb = hex_to_rgb(lower_color)
-    upper_color_rgb = hex_to_rgb(upper_color)
-    color_variations = np.linspace(lower_color_rgb, upper_color_rgb, length) / 255
-    return o3d.utility.Vector3dVector(color_variations)
- 
-
+    colormap = cm.get_cmap('virdis')
+    colormap(0, 1)
+    gradient = np.linspace(0, 1, length)
+    color_gradient = [colormap(i) for i in gradient]
+    return o3d.utility.Vector3dVector(color_gradient)
 

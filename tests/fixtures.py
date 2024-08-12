@@ -4,6 +4,8 @@ import yaml
 
 from calibrator import CalibratorConfig
 
+from .download_camera_calibration import download_calibration_images
+
 config_dict: CalibratorConfig = {
     'cv_options': {
         'resolution': [1920, 1080],
@@ -31,6 +33,8 @@ config_dict: CalibratorConfig = {
     }
 }
 
+FILE_ID = "<file id here>"
+
 ##when pytest gets called, it will fist call fixturs.py
 ##  and then calibration_yaml_fixture will be called
 ##  then, later, when test_* gets called and calibration_yaml_fixture
@@ -41,6 +45,9 @@ config_dict: CalibratorConfig = {
 #   The values of that yaml file ar as defined in config_dict
 @pytest.fixture(scope="session")
 def calibration_yaml_fixture(tmp_path_factory):
+    # download calibration images
+    download_calibration_images(Path.cwd().joinpath("test_images"), FILE_ID)
+
     # dump config yaml into a tmp file
     yaml_data = yaml.dump(config_dict)
     yaml_file:Path = tmp_path_factory.mktemp("config") / "test_calibrator_config.yaml"

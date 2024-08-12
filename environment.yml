@@ -1,0 +1,17 @@
+name: cc-venv
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.10
+  - matplotlib
+  - numpy
+  - pytest
+  - pyyaml
+  - pandas
+  - seaborn
+  - gdown
+  - pip:
+      - opencv-contrib-python==4.10.0.84
+      - open3d==0.18.0
+
