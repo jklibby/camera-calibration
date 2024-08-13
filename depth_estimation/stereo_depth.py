@@ -4,7 +4,7 @@ from typing import *
 from pathlib import Path
 from datetime import datetime
 
-from options import DepthEsitmationOptions
+from options import DepthEstimationOptions
 
 def create_trackbar(name:str, stereo: cv.StereoBM):
     nothing = lambda x: ()
@@ -40,7 +40,17 @@ def create_trackbar_sgbm(name):
     cv.createTrackbar('minDisparity',name,5,25,nothing)
     
 
-def get_stereo_depth(opts: DepthEsitmationOptions):
+def get_stereo_depth(opts: DepthEstimationOptions) -> None:
+    """
+        This function provides a GUI to creating and tuning params for 
+        Block Matching and Semi Global Block Matching Depth Map generation. 
+
+        Outputs:
+            BM params: params stored in OpenCV formatted yaml file in 
+                opts.extrinsic_dir/depth_estimation/stereo_bm.yaml
+            Semi Global BM params: params stored in OpenCV formatted yaml file in 
+                opts.extrinsic_dir/depth_estimation/stereo_sgbm.yaml
+    """
     extrinsics_dir = ""
     left_map_x, left_map_y, right_map_x, right_map_y = opts.load_remaps()
     images = opts.load_paired_images()
@@ -112,11 +122,14 @@ def get_stereo_depth(opts: DepthEsitmationOptions):
             break
 
     cv.destroyAllWindows()
-    write_stereo_object(stereo, file_name="stereo_bm.yaml")
-    write_stereo_object(stereoSGBM, file_name="stereo_sgbm.yaml")
+    extrinsics_dir = Path(opts.extrinsics_dir)
+    bm_path = str(extrinsics_dir.joinpath(["depth_estimation", "stereo_bm.yaml"]))
+    sgbm_path = str(extrinsics_dir.joinpath(["depth_estimation", "stereo_sgbm.yaml"]))
+    write_stereo_object(stereo, file_name=bm_path)
+    write_stereo_object(stereoSGBM, file_name=sgbm_path)
     
 
-def get_live_stereo_depth(opts: DepthEsitmationOptions):
+def get_live_stereo_depth(opts: DepthEstimationOptions):
     left_map_x, left_map_y, right_map_x, right_map_y = opts.load_remaps()
     images = opts.load_paired_images()
     index = 0

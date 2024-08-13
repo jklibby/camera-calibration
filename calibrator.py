@@ -11,7 +11,7 @@ from core import single_camera_calibrate, stereo_camera_calibrate, stereo_rectif
 from options import CVOptionType, CameraCaptureType, CameraCalibrationType
 from options import CVCameraOptions, StereoCameraCalibrationOptions, StereoCameraRectificationOptions
 from options import SingleCameraCaptureOptions, SingleCameraCalibrateOptions, StereoCameraCaptureOptions
-from options import CheckboardProjectionOptions, Validation, DepthEsitmationOptions
+from options import CheckboardProjectionOptions, Validation, DepthEstimationOptions
 from projection import measure_checkerboard, get_checkerboard_pcd
 from visualization import MatplotlibCalibrationVisualizer as CalibrationVisualizer
 from depth_estimation.stereo_depth import get_stereo_depth, get_live_stereo_depth
@@ -49,7 +49,7 @@ class StereoCalibrator:
     stereo_camera_calibrate: StereoCameraCalibrationOptions
 
     stereo_rectification: StereoCameraRectificationOptions
-    stereo_depth_estimation: DepthEsitmationOptions
+    stereo_depth_estimation: DepthEstimationOptions
 
     cb_projection: CheckboardProjectionOptions
 
@@ -138,7 +138,7 @@ class StereoCalibrator:
             world_scaling=config["camera_calibration"]["world_scaling"], 
             validation_pattern_size=config["validation"]["pattern_size"],
         )
-        calibrator.stereo_depth_estimation = DepthEsitmationOptions(
+        calibrator.stereo_depth_estimation = DepthEstimationOptions(
             count=calibrator.stereo_rectification.count, 
             extrinsics_dir=calibrator.stereo_rectification.extrinsic_dir, 
             paired_images_path=calibrator.stereo_rectification.paired_images_path, 

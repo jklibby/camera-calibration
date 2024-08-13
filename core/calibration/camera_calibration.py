@@ -1,3 +1,4 @@
+from typing import Tuple
 import numpy as np
 import cv2 as cv
 from pathlib import Path
@@ -7,7 +8,23 @@ from utils.calibration import get_CB_corners
 from projection import project_world_to_camera
 from visualization import visualize_errors, Thresholder
 
-def single_camera_calibrate(opts: SingleCameraCalibrateOptions) -> float:
+def single_camera_calibrate(opts: SingleCameraCalibrateOptions) -> Tuple[float, np.ndarray]:
+    """
+    Function to calibrate a single camera. Detects checkerboard patterns in captured
+    images. Uses the detcted pattern to calculate intrinsic params and repreojection error. 
+    Plots the reprojection error if `opts.headless` is `False`. Eliminates patterns which lie above
+    `opts.error_threshold` or the selected threshold in the matplotlib reprojection error plot. 
+
+    Args:
+        opts (SingleCameraCalibrateOptions): Options for calibrating a single camera
+    
+    Outputs:
+        stores intrinsic params in the `opts.dir/intrinsc_params/camera_calibration_<opts.cam_id>.npz`
+    
+    Returns:
+        Reprojection error (float): Final reprojection error after discarding outliers.
+        3D_corners: 3D projected corners for visualization.
+    """
     # read all the images
     intrinsics_dir = Path(opts.dir)
     if not Path(opts.path).absolute().exists():
@@ -67,7 +84,7 @@ def single_camera_calibrate(opts: SingleCameraCalibrateOptions) -> float:
         
             if key & 0xFF == ord('q'):
                 cv.destroyAllWindows()
-                return -1
+                break
         else:
             selected_corners.append(display_frames[index][1])
             world_points.append(wp)
@@ -123,6 +140,12 @@ def single_camera_calibrate(opts: SingleCameraCalibrateOptions) -> float:
 
 
 def single_camera_rectification(opts: SingleCameraCalibrateOptions) -> None:
+    """
+    Function to to display undistorted single camera images, runs when `opts.headless`
+
+    Args:
+        opts (SingleCameraCalibrateOptions): Options for calibrating a single camera 
+    """
     if opts.headless:
         return
     intrinsic_params = np.load(Path(opts.dir).absolute().joinpath("camera_calibration_{}.npz".format(opts.cam_id)))

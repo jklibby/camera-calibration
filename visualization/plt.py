@@ -30,7 +30,7 @@ class MatplotlibCalibrationVisualizer():
         ax.scatter(self.camera_positions[:, 0], self.camera_positions[:, 1], self.camera_positions[:, 2])
 
         # plot checkerboard
-        cbb, lines, colors, l_colors = checkerboard_lineset(cb)
+        cbb, lines, colors, l_colors = checkerboard_lineset(corners)
         for index, ll in enumerate(lines):
             ax.plot(ll[:, 0], ll[:, 1], ll[:, 2], c=l_colors[index])
         ax.scatter(cbb[:, 0], cbb[:, 1], cbb[:, 2], c=colors)

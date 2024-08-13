@@ -8,7 +8,23 @@ from utils.calibration import get_CB_corners
 from visualization import visualize_stereo_errors, Thresholder
 
 
-def stereo_camera_calibrate(opts: StereoCameraCalibrationOptions):
+def stereo_camera_calibrate(opts: StereoCameraCalibrationOptions) -> float:
+    """
+        Function to calibrate a stereo camera. Detects checkerboard patterns in captured
+        paired images. Uses the detected pattern to calculate extrinsic params, 
+        Rotation matrix, Translation vector, Essential matrix, Fundamental matrix and repreojection error. 
+        Plots the reprojection error if `opts.headless` is `False`. Eliminates patterns which lie above
+        `opts.error_threshold` or the selected threshold in the matplotlib reprojection error plot. 
+
+        Args:
+            opts (StereoCameraCalibrationOptions): Options for calibrating a stereo camera
+        
+        Outputs:
+            stores extrinsic params in the `opts.dir/extrinsic_params/stereo_calibration.npz`
+        
+        Returns:
+            Reprojection error (float): Final stereo reprojection error after discarding outliers.
+    """
     extrinsics_dir = Path(opts.dir)
     intrinsics_dir = Path(opts.intrinsics_dir)
     if not Path.exists(extrinsics_dir):
@@ -157,6 +173,19 @@ def stereo_camera_calibrate(opts: StereoCameraCalibrationOptions):
 
 
 def stereo_rectification(opts: StereoCameraRectificationOptions):
+    """
+        Function to calculate rectification maps for stereo camera based on the estrinsic 
+        parmaters. If `opts.headless` is `False` then display rectified images and save images.
+
+        Args:
+            opts (StereoCameraRectificationOptions): Options for rectification a stereo camera
+        
+        Outputs:
+            stores recitification maps in the `opts.dir/extrinsic_params/stereo_rectification/stereo_rectification_maps.npz`
+        
+        Returns:
+            Reprojection error (float): Final stereo reprojection error after discarding outliers.
+    """
     intrinsics_dir = Path(opts.intrinsic_dir)
     extrinsics_dir = Path(opts.extrinsic_dir)
     rectified_dir = extrinsics_dir.joinpath("stereo_rectification")

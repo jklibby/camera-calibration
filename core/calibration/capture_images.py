@@ -6,6 +6,12 @@ from pathlib import Path
 from options import SingleCameraCaptureOptions, StereoCameraCaptureOptions
 
 def capture_single_image(opts: SingleCameraCaptureOptions):
+    """
+        Function to capture single camera images and store them in `opts.image_path`
+
+        Args:
+            opts (SingleCameraCaptureOptions): Options for capturing single camera options. 
+    """
     cam_id = opts.cam_id
     count = opts.count
     dir = Path(opts.path).absolute()
@@ -28,8 +34,6 @@ def capture_single_image(opts: SingleCameraCaptureOptions):
     cooldown = 100
 
     opts.cv_options.named_window("Frame")
-    # cv.namedWindow("Frame", cv.WINDOW_NORMAL)
-    # cv.resizeWindow("Frame", opts.cv_options.window_size[0], opts.cv_options.window_size[1])
     while True:
         ret, frame = cap.read()
         key = cv.waitKey(1)
@@ -64,6 +68,12 @@ def capture_single_image(opts: SingleCameraCaptureOptions):
     cv.destroyAllWindows()
 
 def capture_paired_images(opts: StereoCameraCaptureOptions):
+    """
+        Function to capture single camera images and store them in `opts.path`
+
+        Args:
+            opts (StereoCameraCaptureOptions): Options for capturing single camera options. 
+    """
     dir = Path(opts.path)
     left_cam = opts.left_cam_id
     right_cam = opts.right_cam_id

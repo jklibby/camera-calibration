@@ -8,6 +8,17 @@ from utils import get_CB_corners
 from options import CheckboardProjectionOptions
 
 def measure_checkerboard(opts: CheckboardProjectionOptions)-> Tuple[np.ndarray, List[Tuple[float, float]]]:
+    """
+    Measures the checkerboard pattern in a stereo camera setup by capturing rectified images from both cameras.
+
+    Args:
+        opts (CheckboardProjectionOptions): Configuration options for checkerboard projection and stereo camera setup.
+
+    Returns:
+        Tuple[np.ndarray, List[Tuple[float, float]]]: 
+            - A numpy array of point clouds corresponding to the checkerboard corners detected across multiple frames.
+            - A list of tuples where each tuple contains the width and height of the checkerboard pattern detected in each frame.
+    """
     left_map_x, left_map_y, right_map_x, right_map_y = opts.load_remaps()
 
     left_cap = cv.VideoCapture(opts.left_cam_id)
@@ -59,6 +70,17 @@ def measure_checkerboard(opts: CheckboardProjectionOptions)-> Tuple[np.ndarray, 
     return np.array(pcd_list), dimensions
 
 def get_checkerboard_pcd(opts: CheckboardProjectionOptions) -> np.ndarray:
+    """
+    Computes the point cloud of the checkerboard pattern from a set of stereo images. 
+    The function loads paired stereo images, applies rectification, and detects checkerboard corners.
+    It then triangulates the detected corners to compute the 3D point cloud.
+
+    Args:
+        opts (CheckboardProjectionOptions): Configuration options for checkerboard projection and stereo camera setup.
+
+    Returns:
+        np.ndarray: A numpy array of point clouds corresponding to the checkerboard corners detected across multiple images.
+    """
     left_map_x, left_map_y, right_map_x, right_map_y = opts.load_remaps()
     
     pattern = opts.pattern_size
@@ -85,6 +107,17 @@ def get_checkerboard_pcd(opts: CheckboardProjectionOptions) -> np.ndarray:
     return np.array(corners)
 
 def get_point_cloud(p1, p2, opts: CheckboardProjectionOptions) -> np.ndarray:
+    """
+    Triangulates points from stereo image pairs to generate a 3D point cloud.
+
+    Args:
+        p1 (np.ndarray): Detected checkerboard corners in the left image.
+        p2 (np.ndarray): Detected checkerboard corners in the right image.
+        opts (CheckboardProjectionOptions): Configuration options for checkerboard projection and stereo camera setup.
+
+    Returns:
+        np.ndarray: A numpy array representing the 3D point cloud of the detected checkerboard pattern.
+    """
     stereo_calibration = np.load(Path(opts.extrinsics_dir).absolute().joinpath("stereo_calibration.npz"))
     intrinsics_1 = np.load(Path(opts.intrinsic_dir).absolute().joinpath("camera_calibration_{}.npz".format(opts.left_cam_id)))
     intrinsics_2 = np.load(Path(opts.intrinsic_dir).absolute().joinpath("camera_calibration_{}.npz".format(opts.right_cam_id)))

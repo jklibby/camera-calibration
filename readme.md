@@ -1,8 +1,7 @@
-# Stereo Camera - Depth Map
+# Camera Calibration
 
-This repository contains code to calibrate and create depths for a stereo camera system. To begin calibrating run the following commands. 
+This repository contains code to calibrate stereo cameras and create depth maps for a stereo camera system.
 
-The calibration will depend on a (7x7) chessboard pattern. 
 
 **Python Version - 3.10**
 
@@ -21,21 +20,74 @@ Options:
   --help                          Show this message and exit.   
 ```
 
-The command below, will capture 10 single camera images for both the left camera and the right camera. It will then capture 10 paired images for both left camera and right camera. It will then use 10 images to calibration single camera, left and right. Then it will use 10 paired images to calibrate stereo cameras. After that it will display recitified images for the cameras. Then it will display Depth Maps with a wondow to calibrate hyperparameters. 
+The `CONFIG_FILE` defined above for usage with main.py is required for using the CLI. Below is an example of the config file. 
 
 ```
-python main.py --capture-single=10 --capture-paired=10 --calibrate-camera=10 --calibrate-stereo-camera=10 --stereo-depth=10
+cv_options:
+ resolution: #camera resolution
+  - 1920
+  - 1080
+ window_size: #display size
+  - 1280
+  - 720
+
+camera_capture:
+ left_cam_id: 0
+ right_cam_id: 1
+ # image count for single camera capture
+ image_count: 50
+ # image path for for storing single images
+ image_path: single_camera_images
+ # image count for stereo camera capture
+ stereo_images_path: stereo_camera_images
+ # image count for stereo camera capture
+ stereo_images_count: 50
+
+camera_calibration:
+# directories store intrinsic and extrinsic params
+ intrinsic_params_dir: intrinsic_dir
+ extrinsic_params_dir: extrinsic_dir
+# pattern size for checkerboard
+ pattern_size:
+  - 10 #n_rows of checkerboard
+  - 7 #nCols
+# size of one checkboard square
+ world_scaling: 1.5 
+# error threshold for single and stereo calibration
+ single_calibration_error_threshold: 0.3
+ stereo_calibration_error_threshold: 0.7
+ #headless:
+ #  if headless mode (true) no GUI
+ #  If false, error_threshold is chosen interactively
+ headless: False
+
+validation:
+# pattern size for checkerboard
+ pattern_size:
+  - 10 # n_rows of checkerboard
+  - 7 # n_cols of checkerboard
 ```
 
+## Checkerboard
+It is best to use a checkbaoord which is printed or completely stuck to a hard surface. 
 
+Using a heavier stock paper is better than using a normal paper as it tends to abosorb less moisture.
+
+Use a checkbaord pattern with different rows and columns. 
 
 ## Capturing Images
 
-To calibrate a stereo system and generate depth maps, images must be captured from each camera separately and together at the same moment.
+To calibrate a stereo system and generate depth maps, images must be captured from each camera separately and then from a stereo camera.
+
+Make sure that the images captured cover the whole image or majority of the image.
+
+It is important to capture checkerboard patterns which are not fronto-planar, the checkerbaord should not be parallel to the image plane to achieve a good calibration. 
+
+Keep the checkerboard as steady as possible and make sure that the pattern is visible completely.
 
 ### Single Camera Image Capture
 
-Single camera images will be stored in the `single_images` folder, within subdirectories `0` and `1`, referring to the left and right cameras respectively.
+Single camera images will be stored in the `image_path` folder, within subdirectories `0` and `1`, referring to the left and right cameras respectively.
 
 Once the window displaying the live feed from the camera pops up, press the space button and wait for the countdown to begin. At 0, the frame will be automatically stored. This allows ample time to orient the frame in different ways.
 
@@ -43,7 +95,7 @@ Once the window displaying the live feed from the camera pops up, press the spac
 
 ### Stereo Camera Image Capture
 
-Stereo camera images will be stored in the `paired_images` folder. The nomenclature is `camera{camera_id}_{capture_frame_count}.png`. Each capture will produce a pair of images.
+Stereo camera images will be stored in the `stereo_images_path` folder. The nomenclature is `camera{camera_id}_{capture_frame_count}.png`. Each capture will produce a pair of images.
 
 Once the window displaying the live feed from the camera pops up, press the space button and wait for the countdown to begin. At 0, the frame will be automatically stored. Ensure the chessboard is in frame for both cameras.
 
@@ -55,24 +107,52 @@ After capturing the frames, proceed to calibrate the single camera and stereo ca
 
 ### Single Camera Calibration
 
-A new window will display the chessboard corners highlighted in a rainbow color scheme. Select the grids with similar orientation to minimize the RMSE. The RMSE should lie between 0 and 1, with a good value being less than 0.5.
-
+A new window will display the chessboard corners highlighted.
 ![Single Camera Image Calibration](screenshots/Calibrate-Single-Camera.png)
+
+Make sure that all the images have the checkerboard pattern detected.
+
+The plot below will then pop up and display ther reprojection error for each image.
+
+![Reprojection Error](screenshots\Single-Camera-Reprojection-Errors.png)
+
+By clicking on the GUI we can interactively set a threshold and discard the outliers above it to improve calibration. 
+
+![Threshold Reprojection Error](screenshots\Thresholded-Single-Camera-Errors.png)
+
+This will then discard all the images and run calibration in the images which lie below the threshold. 
+
+![Post Threshold Reprojection Error](screenshots\Post-Threshold-Single-Camera-Errors.png)
 
 ### Stereo Camera Calibration
 
-A new window will display the chessboard corners highlighted in a rainbow color scheme for both left and right frames. Select the grids with similar orientation to minimize the RMSE. The RMSE should lie between 0 and 1, with a good value being less than 0.5.
+A new window will display the chessboard corners highlighted in both left and right frames. Make sure to select all the images which a have a checkerboard pattern and skip the rest. 
 
-Press 's' to skip the current frames, press space to include the current frame. Skip a bad frame to improve RMSE.
+![Left Checkerboard Frame](screenshots\Left-Stereo-Checkerboard.png)
+![Right Checkerboard Frame](screenshots\Right-Stereo-Checkerboard.png)
 
-Good stereo match 
-![Good Stereo Camera Image Calibration](screenshots/Good-Stereo-Match.png)
-bad stereo match
-![Bad Stereo Camera Image Calibration](screenshots/Bad-Stereo-Match.png)
+#### Stereo Reprojection Error
+
+Display the left and right camera error for each image pair
+![Stereo Reprojection Error](screenshots\Stereo-Calibration-Reprojection-Errors.png)
+
+Sets the threshold for removing outliers interactively.
+![Threshold Stereo Reprojection Error](screenshots\Thresholded-Stereo-Calibration-Errors.png)
+
+Visualize every error thresholded error pair. 
+
+![Left Image Thresholded](screenshots\Left-Stereo-Thresholded.png)
+![Right Image Thresholded](screenshots\Right-Stereo-Thresholded.png)
+
+Visualize 3D Stereo Pairs
+![3D Stereo Pairs](screenshots\Stereo-3D-Validation.png)
+
+
+
 
 ## Stereo Rectification
 
-Once the system is calibrated to a low enough RMSE, rectification maps will be created to remove distortions from the images.
+Once the system is calibrated to an acceptable RMSE, rectification maps will be created to align the left and right image frames horizontally.
 
 ## Stereo Depth Map
 
