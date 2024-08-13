@@ -77,3 +77,12 @@ Once the system is calibrated to a low enough RMSE, rectification maps will be c
 ## Stereo Depth Map
 
 After calculating the rectification maps, depth maps can be computed. The depth maps need to be calibrated using various hyperparameters, which can be adjusted using trackbars in a new window. Press `c` to apply changes, `space` to move to the next image, and `q` to quit.
+
+# Unit Testing
+To run unit tests, call: 
+```
+pytest tests/ --basetemp test_data -s
+#explanation of options
+#  --basetemp: sets base of temp directory
+#  -s flag: prints logs
+```

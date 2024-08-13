@@ -2,6 +2,10 @@ from pathlib import Path
 import gdown
 import zipfile
 
+#pseudocode
+#  it checks if images exist
+#    if they do, return
+#    if not, images are downloaded
 def download_calibration_images(test_images_path, file_id):
     # check if images exists in base temp path
     test_data_path = Path(test_images_path)

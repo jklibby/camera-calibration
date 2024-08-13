@@ -4,6 +4,7 @@ import yaml
 
 from calibrator import CalibratorConfig
 
+##check if images exist. if not, images are downloaded.
 from .download_camera_calibration import download_calibration_images
 
 config_dict: CalibratorConfig = {
@@ -33,16 +34,20 @@ config_dict: CalibratorConfig = {
     }
 }
 
-FILE_ID = "<file id here>"
+#This is the file id for the google drive location of the checkerboard images.
+FILE_ID = "11DnV4eJ260KHSar1_fIcYjrdB4gLQn7g"
 
-##when pytest gets called, it will fist call fixturs.py
-##  and then calibration_yaml_fixture will be called
-##  then, later, when test_* gets called and calibration_yaml_fixture
+##when pytest gets called, it will first call fixturs.py
+#   and then calibration_yaml_fixture() will be called
+#   then, later, when test_* gets called and calibration_yaml_fixture
 #     is passed in as it's parameter, it will return the yaml_file
 #     which is yielded here at the end of this function.
 #   The whole point of this is so that we can have this yaml file
 #     which only exists temporarily in this session.
-#   The values of that yaml file ar as defined in config_dict
+#   The values of that yaml file are as defined above in config_dict
+#   Another way to implement this would be to create the dictionary 
+#     at the top of test_calibrator.py, before any test_* functions,
+#     but it wouldn't be as clean because it's not clear what the scope is.
 @pytest.fixture(scope="session")
 def calibration_yaml_fixture(tmp_path_factory):
     # download calibration images

@@ -1,9 +1,9 @@
-name: cc-venv
+name: cc-venv #default if -n not tiven on command line
 channels:
   - defaults
   - conda-forge
 dependencies:
-  - python=3.10
+  - python=3.10 #because open3d works with 3.10
   - matplotlib
   - numpy
   - pytest
@@ -12,7 +12,7 @@ dependencies:
   - seaborn
   - gdown
   - click
-  - pip:
+  - pip: #these are the things that conda channels don't have, so we use pip
       - opencv-contrib-python==4.10.0.84
       - open3d==0.18.0
 
