@@ -14,8 +14,8 @@ camera_capture:
  left_cam_id: 0
  right_cam_id: 1
  image_count: 50 #intrinsic
- image_path: single_camera_images #intrinsic
- stereo_images_path: stereo_camera_images #3xtrinsic
+ image_path: single_images_2 #intrinsic
+ stereo_images_path: paired_images_2 #3xtrinsic
  stereo_images_count: 50
 
 camera_calibration:

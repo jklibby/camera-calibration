@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ["ubuntu-latest"]
+        os: ["ubuntu-latest", "windows-latest"]
     runs-on: ${{ matrix.os }}
     environment: testing
     steps:
@@ -30,8 +30,20 @@ jobs:
         environment-file: environment.yml
     - name: Download Camera Calibration Images
       uses: ./.github/actions/download-camera-calibration
+      with:
+        os: ${{ matrix.os }}
       env: 
         CC_FILE_ID: ${{ secrets.FILE_ID }}
-    - name: Test with pytest
+    - name: Test with pytest Ubuntu
+      if: ${{ contains(matrix.os, 'ubuntu') }}
+      run: |
+        conda init
+        source /usr/share/miniconda/etc/profile.d/conda.sh
+        conda activate cc-venv
+        
+        which python
+        python -m pytest tests -s --basetemp test_data
+    - name: Test with pytest Windows
+      if: ${{ contains(matrix.os, 'windows') }}
       run: |
         python -m pytest tests -s --basetemp test_data
