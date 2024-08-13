@@ -1,6 +1,7 @@
 import pytest
 from pathlib import Path
 import yaml
+import shutil
 
 from calibrator import CalibratorConfig
 
@@ -60,4 +61,6 @@ def calibration_yaml_fixture(tmp_path_factory):
         f.write(yaml_data)
         f.close()
     yield yaml_file
-    
+    print("Delete tmp files...")
+    shutil.rmtree(str(yaml_file.parent.parent))
+    print("fnished.")
