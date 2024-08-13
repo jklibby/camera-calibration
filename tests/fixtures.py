@@ -5,6 +5,9 @@ import shutil
 
 from calibrator import CalibratorConfig
 
+##flow
+##  command line: 
+
 ##check if images exist. if not, images are downloaded.
 from .download_camera_calibration import download_calibration_images
 
@@ -51,16 +54,38 @@ FILE_ID = "11DnV4eJ260KHSar1_fIcYjrdB4gLQn7g"
 #     but it wouldn't be as clean because it's not clear what the scope is.
 @pytest.fixture(scope="session")
 def calibration_yaml_fixture(tmp_path_factory):
-    # download calibration images
+    # download calibration images from google drive FILE_ID
+    #   into a new folder in cwd called test_images
     download_calibration_images(Path.cwd().joinpath("test_images"), FILE_ID)
 
     # dump config yaml into a tmp file
-    yaml_data = yaml.dump(config_dict)
+    #   dictionary -> yaml data
+    yaml_data = yaml.dump(config_dict) 
+
+    # create a file name: test_calibrator_config.yaml
+    #    tmp_path_factory is pytest object, which has a mktemp() function
+    #    this next line of code makes a temporary directory, config/
+    #      inside the test_data directory, which is the outer temporary directory
+    #      being used for this unit test.
+    #    then, finally the filename for the yaml file will be inside this temporary dir
+    #      camera-calibration/test_data/config/test_calibrator_config.yaml
     yaml_file:Path = tmp_path_factory.mktemp("config") / "test_calibrator_config.yaml"
+
+    ##write yaml data to yaml temp file
     with open(yaml_file, "+w") as f:
         f.write(yaml_data)
         f.close()
+
+    ##the yield will wait for all the tests to finish
+    ##  we'll come back to this and look at it a little more closely once we have
+    ##  more than one unit test.
     yield yaml_file
     print("Delete tmp files...")
+    
+    ##delete all temporary files before exiting the unit test
+    ##  shutil python package for command line functions
+    ##  rmtree is a recursive rm of a directory
+    ##  yaml_file = camera-calibration/test_data/config/test_calibrator_config.yaml
+    ##  yaml_file.parent.parent = camera-calibration/test_data/
     shutil.rmtree(str(yaml_file.parent.parent))
     print("fnished.")
