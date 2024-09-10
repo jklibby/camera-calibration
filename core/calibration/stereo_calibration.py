@@ -56,8 +56,8 @@ def stereo_camera_calibrate(opts: StereoCameraCalibrationOptions) -> float:
         left_ret, left_pattern_frame, left_corners = get_CB_corners(left_frame, pattern_size)
         right_ret, right_pattern_frame,  right_corners = get_CB_corners(right_frame, pattern_size)
         if left_ret and right_ret:
-            left_start_frame = cv.putText(left_pattern_frame, "Press space to find chessboard corners; s to skip to skip current frame; q to quit; Index: {}".format(index),(100, 100), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 3, 1)
-            right_start_frame = cv.putText(right_pattern_frame, "Press space to find chessboard corners; s to skip to skip current frame; q to quit; Index: {}".format(index),(100, 100), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 3, 1)
+            left_start_frame = cv.putText(left_pattern_frame, "Press space to accept chessboard corners; Press p to accept all; s to skip to skip current frame; q to quit; Index: {}".format(index),(100, 100), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 3, 1)
+            right_start_frame = cv.putText(right_pattern_frame, "Press space to accept chessboard corners; Press p to accept all; s to skip to skip current frame; q to quit; Index: {}".format(index),(100, 100), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 3, 1)
             
             left_display_frames.append((left_start_frame, left_corners))
             right_display_frames.append((right_start_frame, right_corners))

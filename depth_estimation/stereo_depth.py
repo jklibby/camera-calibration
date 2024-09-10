@@ -10,7 +10,6 @@ def create_trackbar(name:str, stereo: cv.StereoBM):
     nothing = lambda x: ()
     cv.namedWindow(name,cv.WINDOW_NORMAL)
     cv.resizeWindow(name, 600,600)
-    
     cv.createTrackbar('numDisparities', name,int(stereo.getNumDisparities() / 16), 50,nothing)
     cv.createTrackbar('blockSize',name,int((stereo.getBlockSize() - 5) / 2),50,nothing)
     cv.createTrackbar('preFilterType',name,stereo.getPreFilterType(),1,nothing)
@@ -20,24 +19,24 @@ def create_trackbar(name:str, stereo: cv.StereoBM):
     cv.createTrackbar('uniquenessRatio',name,stereo.getUniquenessRatio(),100,nothing)
     cv.createTrackbar('speckleRange',name,stereo.getSpeckleRange(),100,nothing)
     cv.createTrackbar('speckleWindowSize',name,int(stereo.getSpeckleWindowSize() / 2),50,nothing)
-    cv.createTrackbar('disp12MaxDiff',name,stereo.getDisp12MaxDiff(),50,nothing)
-    cv.createTrackbar('minDisparity',name,stereo.getMinDisparity(), 50,nothing)
+    cv.createTrackbar('disp12MaxDiff',name,max(stereo.getDisp12MaxDiff(), 0),10,nothing)
+    cv.createTrackbar('minDisparity',name,stereo.getMinDisparity(), 0,nothing)
 
-def create_trackbar_sgbm(name):
+def create_trackbar_sgbm(name, stereo_sgbm: cv.StereoSGBM):
     nothing = lambda x: ()
     cv.namedWindow(name,cv.WINDOW_NORMAL)
     cv.resizeWindow(name, 600,600)
     
-    cv.createTrackbar('numDisparities', name ,1, 50,nothing)
-    cv.createTrackbar('blockSize',name,5,50,nothing)
-    cv.createTrackbar('P1',name,1,10,nothing)
-    cv.createTrackbar('P2',name,1,50,nothing)
-    cv.createTrackbar('preFilterCap',name,5,62,nothing)
-    cv.createTrackbar('uniquenessRatio',name,15,100,nothing)
-    cv.createTrackbar('speckleRange',name,0,100,nothing)
-    cv.createTrackbar('speckleWindowSize',name,3,25,nothing)
-    cv.createTrackbar('disp12MaxDiff',name,5,25,nothing)
-    cv.createTrackbar('minDisparity',name,5,25,nothing)
+    cv.createTrackbar('numDisparities', name, stereo_sgbm.getNumDisparities(), 50,nothing)
+    cv.createTrackbar('blockSize',name, stereo_sgbm.getBlockSize(),50,nothing)
+    cv.createTrackbar('P1',name, stereo_sgbm.getP1(),10,nothing)
+    cv.createTrackbar('P2',name, stereo_sgbm.getP2(),50,nothing)
+    cv.createTrackbar('preFilterCap',name, stereo_sgbm.getPreFilterCap(),62,nothing)
+    cv.createTrackbar('uniquenessRatio',name, stereo_sgbm.getUniquenessRatio(),100,nothing)
+    cv.createTrackbar('speckleRange',name, stereo_sgbm.getSpeckleRange(),100,nothing)
+    cv.createTrackbar('speckleWindowSize',name, stereo_sgbm.getSpeckleWindowSize(),25,nothing)
+    cv.createTrackbar('disp12MaxDiff',name, max(stereo_sgbm.getDisp12MaxDiff(), 0),25,nothing)
+    cv.createTrackbar('minDisparity',name, stereo_sgbm.getMinDisparity(),25,nothing)
     
 
 def get_stereo_depth(opts: DepthEstimationOptions) -> None:
@@ -67,7 +66,7 @@ def get_stereo_depth(opts: DepthEstimationOptions) -> None:
     stereo_name = "stereo disparity map params"
     sgbm_name = "sgbm disparity map params"
     create_trackbar(stereo_name, stereo)
-    create_trackbar_sgbm(sgbm_name)
+    create_trackbar_sgbm(sgbm_name, stereoSGBM)
     
 
     left_frame = cv.imread(images[index][0])
@@ -137,7 +136,7 @@ def get_live_stereo_depth(opts: DepthEstimationOptions):
     stereo_name = "stereo disparity map params"
     sgbm_name = "sgbm disparity map params"
     create_trackbar(stereo_name)
-    create_trackbar(sgbm_name)
+    create_trackbar_sgbm(sgbm_name)
     
     ret, stereo = load_stereo_object("random.json")
     if not ret:
@@ -226,9 +225,7 @@ def update_stereo(name:str, stereo: cv.StereoBM):
     speckleWindowSize = cv.getTrackbarPos('speckleWindowSize',name)*2
     disp12MaxDiff = cv.getTrackbarPos('disp12MaxDiff',name)
     minDisparity = cv.getTrackbarPos('minDisparity',name)
-    P1 = 8 * 3 * blockSize ** 2
-    P2 = 32 * 3 * blockSize ** 2
-
+    
     # Setting the updated parameters before computing disparity map
     stereo.setNumDisparities(numDisparities)
     stereo.setBlockSize(blockSize)

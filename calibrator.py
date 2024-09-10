@@ -13,7 +13,7 @@ from options import CVCameraOptions, StereoCameraCalibrationOptions, StereoCamer
 from options import SingleCameraCaptureOptions, SingleCameraCalibrateOptions, StereoCameraCaptureOptions
 from options import CheckboardProjectionOptions, Validation, DepthEstimationOptions
 from projection import measure_checkerboard, get_checkerboard_pcd
-from visualization import MatplotlibCalibrationVisualizer as CalibrationVisualizer
+from visualization import Open3DCalibrationVisualizer as CalibrationVisualizer
 from depth_estimation.stereo_depth import get_stereo_depth, get_live_stereo_depth
 
 

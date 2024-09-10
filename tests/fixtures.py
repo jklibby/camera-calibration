@@ -1,3 +1,4 @@
+import os
 import pytest
 from pathlib import Path
 import yaml
@@ -25,8 +26,8 @@ config_dict: CalibratorConfig = {
         'stereo_images_count': 50
     },
     'camera_calibration': {
-        'intrinsic_params_dir': 'test_data/intrinsic_dir',
-        'extrinsic_params_dir': 'test_data/extrinsic_dir',
+        'intrinsic_params_dir': '{}/intrinsic_dir',
+        'extrinsic_params_dir': '{}/extrinsic_dir',
         'pattern_size': [10, 7],
         'world_scaling': 1.5,
         'single_calibration_error_threshold': 0.3,
@@ -58,10 +59,6 @@ def calibration_yaml_fixture(tmp_path_factory):
     #   into a new folder in cwd called test_images
     download_calibration_images(Path.cwd().joinpath("test_images"), FILE_ID)
 
-    # dump config yaml into a tmp file
-    #   dictionary -> yaml data
-    yaml_data = yaml.dump(config_dict) 
-
     # create a file name: test_calibrator_config.yaml
     #    tmp_path_factory is pytest object, which has a mktemp() function
     #    this next line of code makes a temporary directory, config/
@@ -70,6 +67,16 @@ def calibration_yaml_fixture(tmp_path_factory):
     #    then, finally the filename for the yaml file will be inside this temporary dir
     #      camera-calibration/test_data/config/test_calibrator_config.yaml
     yaml_file:Path = tmp_path_factory.mktemp("config") / "test_calibrator_config.yaml"
+    
+    basedir = yaml_file.parent.parent.relative_to(yaml_file.parent.parent.parent)
+    # update test data directory
+    config_dict["camera_calibration"]["intrinsic_params_dir"] = config_dict["camera_calibration"]["intrinsic_params_dir"]\
+        .format(basedir)
+    config_dict["camera_calibration"]["extrinsic_params_dir"] = config_dict["camera_calibration"]["extrinsic_params_dir"]\
+        .format(basedir)
+    # dump config yaml into a tmp file
+    #   dictionary -> yaml data
+    yaml_data = yaml.dump(config_dict) 
 
     ##write yaml data to yaml temp file
     with open(yaml_file, "+w") as f:
@@ -87,5 +94,5 @@ def calibration_yaml_fixture(tmp_path_factory):
     ##  rmtree is a recursive rm of a directory
     ##  yaml_file = camera-calibration/test_data/config/test_calibrator_config.yaml
     ##  yaml_file.parent.parent = camera-calibration/test_data/
-    shutil.rmtree(str(yaml_file.parent.parent))
+    shutil.rmtree(basedir)
     print("fnished.")

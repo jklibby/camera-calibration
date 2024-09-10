@@ -68,12 +68,26 @@ validation:
   - 7 # n_cols of checkerboard
 ```
 
-## Checkerboard
-It is best to use a checkbaoord which is printed or completely stuck to a hard surface. 
+## Hardware
+
+### Cameras
+
+The cameras used while developing this package are listed [here](https://emeet.com/products/webcam-c960?srsltid=AfmBOoqEeD-NkI387nEIdUqKJ3EZzhl9x4CIyGW41jNczWauxN5j-cBd).
+
+Furthermore, if you have your laptop does not have USB compatibility, use connecting wires from the same company to connect all your cameras.
+
+### Camera Setup
+
+We 3D printed a camera rig for our webcams. We also printed a stencil to create a stereo camera system to place both the cameras on. 
+
+### Checkerboard
+It is best to use a checkerboard which is printed or completely stuck to a hard surface. 
 
 Using a heavier stock paper is better than using a normal paper as it tends to abosorb less moisture.
 
-Use a checkbaord pattern with different rows and columns. 
+Use a checkbaord pattern with different rows and columns, i.e number of rows should not be equal to number of columns. 
+
+You can use this [link](https://calib.io/pages/camera-calibration-pattern-generator) to generate checkerboards.
 
 ## Capturing Images
 
@@ -157,6 +171,11 @@ Once the system is calibrated to an acceptable RMSE, rectification maps will be 
 ## Stereo Depth Map
 
 After calculating the rectification maps, depth maps can be computed. The depth maps need to be calibrated using various hyperparameters, which can be adjusted using trackbars in a new window. Press `c` to apply changes, `space` to move to the next image, and `q` to quit.
+
+![Depth Map Tuning](screenshots\Depth-Map-Tuning.png)
+
+The hyperparameters for Stereo Block Matching and Semi-Global Block matching(SGBM) can be tuned using GUI shown above. 
+
 
 # Unit Testing
 To run unit tests, call: 

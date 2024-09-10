@@ -52,7 +52,7 @@ def single_camera_calibrate(opts: SingleCameraCalibrateOptions) -> Tuple[float, 
         # find chessboard corners
         ret, pattern_frame, corners = get_CB_corners(frame, pattern_size)
         if ret:
-            start_frame = cv.putText(pattern_frame, "Press space to find chessboard corners; s to skip to skip current frame; q to quit",(100, 100), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 3, 1)
+            start_frame = cv.putText(pattern_frame, "Press space to accept chessboard corners; s to skip to skip current frame; q to quit; Press p to accept all images",(100, 100), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 3, 1)
             display_frames.append((start_frame, corners))
 
     if not opts.headless:

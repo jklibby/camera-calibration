@@ -21,6 +21,8 @@ class Thresholder():
 def visualize_errors(thresholder: Thresholder, cam_id, errors):
     ax = sns.barplot(errors)
     ax.figure.canvas.mpl_connect('button_press_event', thresholder.draw_horizontal_on_event(ax))
+    ax.set_xlabel("Image Index")
+    ax.set_ylabel("RMSE (px)")
     plt.title('Single Camera Calibration Errors: Cam ID {}'.format(cam_id))
     plt.show()
 
@@ -33,5 +35,7 @@ def visualize_stereo_errors(thresholder: Thresholder, errors):
     ax = sns.barplot(melted_df, x="Index", y="Error", hue="Camera")
     ax.figure.canvas.mpl_connect('button_press_event', thresholder.draw_horizontal_on_event(ax))
     plt.title('Stereo Camera Calibration Errors')
+    ax.set_xlabel("Image Index")
+    ax.set_ylabel("RMSE (px)")
     plt.show()
 

@@ -1,5 +1,4 @@
 import pytest
-
 import numpy as np
 from pathlib import Path
 
@@ -41,6 +40,25 @@ def test_calibrator(calibration_yaml_fixture):
     # get stereo remaps
     calibrator.stereo_rectify()
     assert_stereo_rectification(calibrator)
+
+def test_calibration_results(calibration_yaml_fixture):
+    calibrator = StereoCalibrator.from_yaml(calibration_yaml_fixture)
+    left_cam_id, right_cam_id = calibrator.left_camera_calibrate.cam_id, calibrator.right_camera_calibrate.cam_id
+    intrinsics_path = Path(config_dict["camera_calibration"]["intrinsic_params_dir"]).absolute()
+    left_intrinsics_path = str(intrinsics_path.joinpath("camera_calibration_{}.npz".format(left_cam_id)).absolute())
+    right_intrinsics_path = str(intrinsics_path.joinpath("camera_calibration_{}.npz".format(right_cam_id)).absolute())
+    
+    intrinsic_data_0 = np.load(left_intrinsics_path)
+    intrinsic_data_1 = np.load(right_intrinsics_path)
+
+    k_l = intrinsic_data_0["calibration_mtx"]
+    dist_l = intrinsic_data_0["dist"]
+    k_r = intrinsic_data_1["calibration_mtx"]
+    dist_r = intrinsic_data_1["dist"]
+
+    assert_left_intrsinc_params(k_l, dist_l)
+    assert_right_intrinsic_params(k_r, dist_r)
+
 
 
 def assert_stereo_calibrator_build(calibrator: StereoCalibrator):
@@ -150,3 +168,23 @@ def assert_stereo_rectification(calibrator: StereoCalibrator):
     assert left_map_y.all() == True
     assert right_map_x.all() == True
     assert right_map_y.all() == True
+
+def assert_left_intrsinc_params(actual_intrinsic_mtx, actual_dist):
+    cam_l = np.array([
+        [1.04818321e+03, 0.00000000e+00, 9.36191776e+02], 
+        [0.00000000e+00, 1.05200757e+03, 4.82005045e+02], 
+        [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]
+    ])
+    cam_l_dist = np.array([[ 0.17897429, -0.29496407, 0., 0., 0.19290885]])
+    assert np.linalg.norm(cam_l - actual_intrinsic_mtx) < 1e-4
+    assert np.linalg.norm(cam_l_dist - actual_dist) < 1e-4
+
+def assert_right_intrinsic_params(actual_intrinsic_mtx, actual_dist):
+    cam_r = np.array([
+        [1.05966260e+03, 0.00000000e+00, 9.49855570e+02],
+        [0.00000000e+00, 1.06308441e+03, 5.22226806e+02],
+        [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]
+    ])
+    cam_r_dist = np.array([[ 0.17702108, -0.24510661, 0., 0., 0.10531204]])
+    assert np.linalg.norm(actual_intrinsic_mtx - cam_r) < 1e-4
+    assert np.linalg.norm(actual_dist - cam_r_dist) < 1e-4
