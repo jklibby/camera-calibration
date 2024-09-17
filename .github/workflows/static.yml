@@ -51,7 +51,9 @@ jobs:
           source /usr/share/miniconda/etc/profile.d/conda.sh
           conda activate cc-venv
           pip install pdoc 
-          pdoc core options visualization depth_estimation projection -o docs
+          echo "starting documentation build..."
+          PDOC_ALLOW_EXEC=1 pdoc core options visualization depth_estimation projection -o ./docs
+          echo "finished documentation build."
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
