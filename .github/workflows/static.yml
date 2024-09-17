@@ -39,6 +39,8 @@ jobs:
             python-version: '3.10'
       - name: Run Pdoc
         run: |
+          ls -a
+          pwd
           pip install pdoc 
           pdoc core options visualization depth_estimation projection -o docs
       - name: Upload artifact
