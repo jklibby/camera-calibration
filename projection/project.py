@@ -91,7 +91,8 @@ def point_cloud_selector(opts: CheckboardProjectionOptions) -> np.ndarray:
     right_points = right_points.reshape((-1, 1, 2))
     pcd = get_point_cloud(left_points, right_points, opts)
     pcd = pcd.reshape((num_images, -1, 3))
-    print(pcd.shape, np.linalg.norm(pcd[:, 0, :] - pcd[:, -1, :]))
+    for p in pcd:
+        print("Distance between first point and last point: {:0.3f} cm".format(np.linalg.norm(p[0, :] - p[-1, :])))
     return pcd
 
 

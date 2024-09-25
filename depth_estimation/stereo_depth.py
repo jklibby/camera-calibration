@@ -122,8 +122,8 @@ def get_stereo_depth(opts: DepthEstimationOptions) -> None:
 
     cv.destroyAllWindows()
     extrinsics_dir = Path(opts.extrinsics_dir)
-    bm_path = str(extrinsics_dir.joinpath(["depth_estimation", "stereo_bm.yaml"]))
-    sgbm_path = str(extrinsics_dir.joinpath(["depth_estimation", "stereo_sgbm.yaml"]))
+    bm_path = str(extrinsics_dir.joinpath(*["depth_estimation", "stereo_bm.yaml"]))
+    sgbm_path = str(extrinsics_dir.joinpath(*["depth_estimation", "stereo_sgbm.yaml"]))
     write_stereo_object(stereo, file_name=bm_path)
     write_stereo_object(stereoSGBM, file_name=sgbm_path)
     

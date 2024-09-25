@@ -11,7 +11,7 @@ class Open3DCalibrationVisualizer():
         
         self.camera_positions = [np.array([0, 0, 0], dtype=np.float32)]
         for r, t in zip(self.R, self.T):
-            camera_pos = t.flatten()
+            camera_pos = -t.flatten()
             self.camera_positions.append(camera_pos)
         self.viz: o3d.visualization.Visualizer = o3d.visualization.Visualizer()
 
