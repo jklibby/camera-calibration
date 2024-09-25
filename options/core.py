@@ -53,6 +53,7 @@ class StereoCameraCaptureOptions:
         right_cam_id (int): The ID of the right camera.
         count (int): The number of image pairs to capture.
         path (str): The path where the images will be saved.
+        rectify_images_opt (StereoCameraRectificationOptions): Capture rectified pair of stereo images.
         cv_options (CVCameraOptions): Camera options for OpenCV.
     """
     def __init__(self, left_cam_id: int, right_cam_id: int, count:int, path: str, cv_options: CVCameraOptions) -> None:
@@ -62,6 +63,9 @@ class StereoCameraCaptureOptions:
         self.path = str(Path(path).absolute())
 
         self.cv_options = cv_options
+
+        # in-memory flag. Only to be used when stereo calibration is performed
+        self.rectify_opts:StereoCameraRectificationOptions | None = None
 
 class SingleCameraCalibrateOptions(SingleImageLoader):
     """

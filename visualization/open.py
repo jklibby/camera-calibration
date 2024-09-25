@@ -16,7 +16,7 @@ class Open3DCalibrationVisualizer():
         self.viz: o3d.visualization.Visualizer = o3d.visualization.Visualizer()
 
 
-    def display_scene(self, corners):
+    def display_scene(self, corners, **kwargs):
         "creates an Open3DE scene with cameras"
         # convert camera coordinates to point clouds
         self.viz.create_window()
@@ -98,9 +98,9 @@ def checkerboard_lineset(corners):
     return [cb_lineset, corner_pcd]
 
 def color_bar(length):
-    colormap = cm.get_cmap('virdis')
+    colormap = cm.get_cmap('viridis')
     colormap(0, 1)
     gradient = np.linspace(0, 1, length)
-    color_gradient = [colormap(i) for i in gradient]
+    color_gradient = np.array([list(colormap(i))[:3] for i in gradient])
     return o3d.utility.Vector3dVector(color_gradient)
 

@@ -13,7 +13,9 @@ from calibrator import StereoCalibrator
 @click.option('--rectify-stereo-cameras', default=False, help="Rectify stereo images.")
 @click.option('--validate-calibration', default=False, help="Measure the validation checkerboard with stereo calibration. Utilizes DLT.")
 @click.option('--tune-disparity', default=False, help="Tune BM and SGBM diaprity params for rectified images.")
-def run(config_file, full, capture_single_images, capture_stereo_images, calibrate_single_cameras, calibrate_stereo_cameras, rectify_stereo_cameras, validate_calibration, tune_disparity):
+@click.option('--drop-stereo-points', default=False, help="Select idnetical points in stereo frames and project them to 3D")
+@click.option('--capture-rectified-images', default=False, help="Capture rectified stereo images")
+def run(config_file, full, capture_single_images, capture_stereo_images, calibrate_single_cameras, calibrate_stereo_cameras, rectify_stereo_cameras, validate_calibration, tune_disparity, drop_stereo_points, capture_rectified_images):
     ##static function, returnes calibration object, c, with the config file loaded
     calibrator = StereoCalibrator.from_yaml(config_file)
 
@@ -39,6 +41,12 @@ def run(config_file, full, capture_single_images, capture_stereo_images, calibra
     
     if tune_disparity or full:
         calibrator.tune_dispairty()
+    
+    if drop_stereo_points:
+        calibrator.point_cloud_selector()
+    
+    if capture_rectified_images:
+        calibrator.capture_rectified_stereo_images()
 
 if __name__ == '__main__':
     run()

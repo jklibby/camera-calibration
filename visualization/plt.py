@@ -17,7 +17,7 @@ class MatplotlibCalibrationVisualizer():
         self.camera_positions = np.array(self.camera_positions)
 
 
-    def display_scene(self, corners):
+    def display_scene(self, corners, **kwargs):
         fig = plt.figure(figsize=(10, 10))
         ax = fig.add_subplot(111, projection='3d')
 

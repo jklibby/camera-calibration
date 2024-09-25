@@ -162,8 +162,6 @@ Visualize 3D Stereo Pairs
 ![3D Stereo Pairs](screenshots\Stereo-3D-Validation.png)
 
 
-
-
 ## Stereo Rectification
 
 Once the system is calibrated to an acceptable RMSE, rectification maps will be created to align the left and right image frames horizontally.

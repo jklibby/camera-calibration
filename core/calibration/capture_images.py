@@ -74,7 +74,8 @@ def capture_paired_images(opts: StereoCameraCaptureOptions):
         Args:
             opts (StereoCameraCaptureOptions): Options for capturing single camera options. 
     """
-    dir = Path(opts.path)
+    dir = Path(opts.path) if opts.rectify_opts is None else Path(opts.rectify_opts.extrinsic_dir).joinpath(*["stereo_rectification", "validation_images"])
+    print(dir)
     left_cam = opts.left_cam_id
     right_cam = opts.right_cam_id
     count = opts.count
@@ -98,6 +99,14 @@ def capture_paired_images(opts: StereoCameraCaptureOptions):
     opts.cv_options.named_window("Left Frame")
     opts.cv_options.named_window("Right Frame")
 
+    # rectify if neccessary
+    left_map_x, left_map_y, right_map_x, right_map_y = None, None, None, None
+    if opts.rectify_opts:
+        path = str(Path(opts.rectify_opts.extrinsic_dir).joinpath("stereo_rectification", "stereo_rectification_maps.npz").absolute())
+        remaps = np.load(path)
+        left_map_x, left_map_y, right_map_x, right_map_y = remaps['left_map_x'], remaps['left_map_y'], remaps['right_map_x'], remaps['right_map_y']
+        
+
     start_capture = False
     cooldown = 100
     cap_count = 0
@@ -119,6 +128,10 @@ def capture_paired_images(opts: StereoCameraCaptureOptions):
             break
 
         if not start_capture:
+            if opts.rectify_opts:
+                    left_frame = cv.remap(left_frame, left_map_x, left_map_y, cv.INTER_LANCZOS4)
+                    right_frame = cv.remap(right_frame, right_map_x, right_map_y, cv.INTER_LANCZOS4)
+                
             left_start_frame = cv.putText(left_frame, "Press space to begin capturing images; q to quit",(100, 100), cv.FONT_HERSHEY_COMPLEX, 1, (0, 0, 255), 2, 1)
             right_start_frame = cv.putText(right_frame, "Press space to begin capturing images; q to quit",(100, 100), cv.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 2, 1)
             cv.imshow("Left Frame", left_start_frame)

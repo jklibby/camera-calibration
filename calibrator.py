@@ -12,8 +12,8 @@ from options import CVOptionType, CameraCaptureType, CameraCalibrationType
 from options import CVCameraOptions, StereoCameraCalibrationOptions, StereoCameraRectificationOptions
 from options import SingleCameraCaptureOptions, SingleCameraCalibrateOptions, StereoCameraCaptureOptions
 from options import CheckboardProjectionOptions, Validation, DepthEstimationOptions
-from projection import measure_checkerboard, get_checkerboard_pcd
-from visualization import Open3DCalibrationVisualizer as CalibrationVisualizer
+from projection import measure_checkerboard, get_checkerboard_pcd, point_cloud_selector
+from visualization import PlotlyCalibrationVisualizer as CalibrationVisualizer
 from depth_estimation.stereo_depth import get_stereo_depth, get_live_stereo_depth
 
 
@@ -199,4 +199,24 @@ class StereoCalibrator:
         # visualize corners
         viz = CalibrationVisualizer(R=[R], T=[T])
         viz.display_scene(corners_pcd)
+    
+    def point_cloud_selector(self) -> np.ndarray:
+        pcd = point_cloud_selector(self.cb_projection)
+        extrinsic_params_path = Path(self.stereo_rectification.extrinsic_dir).absolute().joinpath("stereo_calibration.npz")
+        extrinsic_params = np.load(extrinsic_params_path)
+        R, T = extrinsic_params["R"], extrinsic_params["T"]
+        # visualize corners
+        viz = CalibrationVisualizer(R=[R], T=[T])
+        np.save("validation_grid_points_dlt", pcd)
+        viz.display_scene(pcd, display_magnitudes=True)
 
+    def capture_rectified_stereo_images(self) -> None:
+        # ensure stereo calibration has been performed and 
+        # extrinsic params exists
+        extrinsic_params_path = Path(self.stereo_rectification.extrinsic_dir).absolute().joinpath("stereo_calibration.npz")
+        if not extrinsic_params_path.exists():
+            return
+        
+        self.stereo_camera_capture.rectify_opts = self.stereo_rectification
+
+        capture_paired_images(self.stereo_camera_capture)
