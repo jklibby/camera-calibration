@@ -91,8 +91,20 @@ def point_cloud_selector(opts: CheckboardProjectionOptions) -> np.ndarray:
     right_points = right_points.reshape((-1, 1, 2))
     pcd = get_point_cloud(left_points, right_points, opts)
     pcd = pcd.reshape((num_images, -1, 3))
-    for p in pcd:
-        print("Distance between first point and last point: {:0.3f} cm".format(np.linalg.norm(p[0, :] - p[-1, :])))
+
+    stereo_calibration = np.load(Path(opts.extrinsics_dir).absolute().joinpath("stereo_calibration.npz"))
+    intrinsics_1 = np.load(Path(opts.intrinsic_dir).absolute().joinpath("camera_calibration_{}.npz".format(opts.left_cam_id)))
+    intrinsics_2 = np.load(Path(opts.intrinsic_dir).absolute().joinpath("camera_calibration_{}.npz".format(opts.right_cam_id)))
+    K1, dst1 = intrinsics_1["calibration_mtx"], intrinsics_1["dist"]
+    K2, dst2 = intrinsics_2["calibration_mtx"],  intrinsics_2["dist"]
+    R, T = stereo_calibration['R'], stereo_calibration['T']
+
+    left_image_reprojected, right_image_reprojected = reproject_stereo_pcd(pcd, K1, dst1, K2, dst2, np.eye(3), R, np.zeros((3, 1)), T)
+    
+    left_reproj_error = np.linalg.norm((left_points - left_image_reprojected).squeeze(1), axis=0).mean()
+    right_reproj_error = np.linalg.norm((right_points - right_image_reprojected).squeeze(1), axis=0).mean()
+    
+    print(pcd.shape, np.linalg.norm(pcd[:, 0, :] - pcd[:, -1, :]), left_reproj_error, right_reproj_error)
     return pcd
 
 
@@ -240,6 +252,19 @@ def _triangulate(P1, P2, point1, point2):
     U, s, Vh = np.linalg.svd(B, full_matrices = False)
 
     return Vh[3,0:3]/Vh[3,3]
+
+def reproject_stereo_pcd(pcd, mtx1, dst1, mtx2, dst2, R1, R2, tvec1, tvec2):
+    def _reproject(R, tvec, mtx, dst):
+        R, _ = cv.Rodrigues(R)
+        return cv.projectPoints(pcd, R, tvec, mtx, dst)
+
+    # reproject 3D points in frame one
+    left_projected_points, _ = _reproject(R1, tvec1, mtx1, dst1)
+
+    # reproject 3D points in frame two
+    right_projected_points, _ = _reproject(R2, tvec2, mtx2, dst2)
+
+    return left_projected_points, right_projected_points
 
 def _get_width_height(corner_pcd, pattern):
     print(corner_pcd.shape)

@@ -2,6 +2,7 @@ from typing import Tuple
 import numpy as np
 import cv2 as cv
 from pathlib import Path
+from scipy.spatial.transform import Rotation as R
 
 from options import SingleCameraCalibrateOptions
 from utils.calibration import get_CB_corners
@@ -98,7 +99,7 @@ def single_camera_calibrate(opts: SingleCameraCalibrateOptions) -> Tuple[float, 
     ret, mtx, dist, rvecs, tvecs = cv.calibrateCamera(world_points, selected_corners, (width, height), None, None, flags=opts.flags, criteria=opts.criteria)
     
     print("{} - RMSE: ".format(cam_id), ret)
-    re, per_view_errors = reprojection_error(world_points, selected_corners, mtx, dist, rvecs, tvecs)
+    re, per_view_errors, uncertainities = reprojection_error(world_points, selected_corners, mtx, dist, rvecs, tvecs)
     print("Reprojection Error: ", re)
     print(mtx)
     print(dist)
@@ -179,13 +180,25 @@ def reprojection_error(world_points, corners, mtx, dist, rvecs, tvecs):
     total_count = len(world_points) * world_points[0].shape[0]
     per_view_count = world_points[0].shape[0]
     per_view_error = list()
+    uncertainities = list()
     for i in range(len(world_points)):
-        reprojected_points, _ = cv.projectPoints(world_points[i], rvecs[i], tvecs[i], mtx, dist)
+        reprojected_points, jacobian = cv.projectPoints(world_points[i], rvecs[i], tvecs[i], mtx, dist)
+        print(jacobian.shape)
+        
+        sigma_image = 1.0 
+        Sigma_inv = (jacobian.T @ jacobian) / (sigma_image ** 2)
+        covariance_pose = np.linalg.inv(Sigma_inv)
+        
+        variances = np.diag(covariance_pose)
+        std_devs = np.sqrt(np.abs(variances))  
+        print(std_devs)
+        uncertainities.append(std_devs)
+
         error = np.linalg.norm((corners[i] - reprojected_points)) ** 2
         per_view_error.append(np.sqrt(error / per_view_count))
         se += error
     mse = se / total_count
-    return np.sqrt(mse), np.array(per_view_error)
+    return np.sqrt(mse), np.array(per_view_error), np.array(uncertainities)
 
 def project_axis(world_points, corners, mtx, dist):
     axis = np.array([[[3.0, 0.0, 0.0]], [[0.0, 1.0, 0.0]], [[0.0, 0.0, -6.0]]], dtype=np.float32)

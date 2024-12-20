@@ -37,16 +37,16 @@ def run(config_file, full, capture_single_images, capture_stereo_images, calibra
     
     if validate_calibration or full:
         calibrator.visualize_checkerboards()
-        width, height = calibrator.measure_checkerboard()
+        # width, height = calibrator.measure_checkerboard()
     
     if tune_disparity or full:
         calibrator.tune_dispairty()
     
-    if drop_stereo_points:
-        calibrator.point_cloud_selector()
-    
     if capture_rectified_images:
         calibrator.capture_rectified_stereo_images()
+
+    if drop_stereo_points:
+        calibrator.point_cloud_selector()
 
 if __name__ == '__main__':
     run()

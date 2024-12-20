@@ -17,3 +17,5 @@ venv
 *.json
 *.zip
 *~
+
+*.DS_Store

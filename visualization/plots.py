@@ -24,6 +24,7 @@ def visualize_errors(thresholder: Thresholder, cam_id, errors):
     ax.figure.canvas.mpl_connect('button_press_event', thresholder.draw_horizontal_on_event(ax))
     ax.set_xlabel("Image Index")
     ax.set_ylabel("RMSE (px)")
+    ax.set_xticklabels(list(range(len(errors))), rotation=90)
     plt.title('Single Camera Calibration Errors: Cam ID {}'.format(cam_id))
     plt.show()
 
