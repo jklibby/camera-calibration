@@ -2,7 +2,6 @@ from typing import Tuple
 import numpy as np
 import cv2 as cv
 from pathlib import Path
-from scipy.spatial.transform import Rotation as R
 
 from options import SingleCameraCalibrateOptions
 from utils.calibration import get_CB_corners

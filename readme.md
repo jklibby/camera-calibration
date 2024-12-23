@@ -10,14 +10,27 @@ Usage: main.py [OPTIONS] CONFIG_FILE
 
 Options:
   --full BOOLEAN                  Run the whole pipeline.
-  --capture-single-images BOOLEAN Capture images for single camera calibration.
-  --capture-stereo-images BOOLEAN Capture images for stereo camera calibration.
-  --calibrate-single-cameras BOOLEAN Calibrate single cameras.
-  --calibrate-stereo-cameras BOOLEAN Calibrate stereo cameras.
-  --rectify-stereo-cameras BOOLEAN Rectify stereo images.
-  --validate-calibration BOOLEAN  Measure the validation checkerboard with stereo calibration. Utilizes DLT.
-  --tune-disparity BOOLEAN        Tune BM and SGBM diaprity params for rectified images.
-  --help                          Show this message and exit.   
+  --capture-single-images BOOLEAN
+                                  Capture images for single camera
+                                  calibration.
+  --capture-stereo-images BOOLEAN
+                                  Capture images for stereo camera
+                                  calibration.
+  --calibrate-single-cameras BOOLEAN
+                                  Calibrate single cameras.
+  --calibrate-stereo-cameras BOOLEAN
+                                  Calibrate stereo cameras.
+  --rectify-stereo-cameras BOOLEAN
+                                  Rectify stereo images.
+  --validate-calibration BOOLEAN  Measure the validation checkerboard with
+                                  stereo calibration. Utilizes DLT.
+  --tune-disparity BOOLEAN        Tune BM and SGBM diaprity params for
+                                  rectified images.
+  --drop-stereo-points BOOLEAN    Select idnetical points in stereo frames and
+                                  project them to 3D
+  --capture-rectified-images BOOLEAN
+                                  Capture rectified stereo images
+  --help                          Show this message and exit.  
 ```
 
 The `CONFIG_FILE` defined above for usage with main.py is required for using the CLI. Below is an example of the config file. 

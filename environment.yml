@@ -12,6 +12,7 @@ dependencies:
   - seaborn
   - gdown
   - click
+  - scikit-learn
   - pip: #these are the things that conda channels don't have, so we use pip
       - opencv-contrib-python==4.10.0.84
       - open3d==0.18.0

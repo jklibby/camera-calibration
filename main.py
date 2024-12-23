@@ -19,17 +19,23 @@ def run(config_file, full, capture_single_images, capture_stereo_images, calibra
     ##static function, returnes calibration object, c, with the config file loaded
     calibrator = StereoCalibrator.from_yaml(config_file)
 
+    if capture_single_images or full:
+        calibrator.capture_single_camera(calibrator.left_camera_capture)
+        calibrator.capture_single_camera(calibrator.right_camera_capture)
+
     if calibrate_single_cameras or full:
-        capture_single_images = capture_single_images or full
         ##intrinsic calibration for left camera
         ##  this calls cv.calibrateCamera and repojection_error
-        calibrator.calibrate_single_camera(calibrator.left_camera_calibrate, capture_images=capture_single_images)
+        calibrator.calibrate_single_camera(calibrator.left_camera_calibrate)
         ##intrinsic calibration for right camera
-        calibrator.calibrate_single_camera(calibrator.right_camera_calibrate, capture_images=capture_single_images)
+        calibrator.calibrate_single_camera(calibrator.right_camera_calibrate)
     
+    if capture_stereo_images or full:
+        calibrator.capture_stereo_camera()
+
     if calibrate_stereo_cameras or full:
         ##extrinsic calibration
-        calibrator.calibrate_stereo_camera(capture_images=(capture_stereo_images or full))
+        calibrator.calibrate_stereo_camera()
     
     if rectify_stereo_cameras or full:
         ##rectification
