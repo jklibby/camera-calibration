@@ -7,10 +7,18 @@ from options import SingleCameraCaptureOptions, StereoCameraCaptureOptions
 
 def capture_single_image(opts: SingleCameraCaptureOptions):
     """
-        Function to capture single camera images and store them in `opts.image_path`
+    Description
+      Function to capture single camera images and store them in `opts.image_path`
+    Inputs
+      args: opts (SingleCameraCaptureOptions): Options for capturing single camera options. 
+      read in from file: NA
+    Outputs
+      args set: NA
+      returns: NA
+      written to file: opts.image_path
 
-        Args:
-            opts (SingleCameraCaptureOptions): Options for capturing single camera options. 
+
+            
     """
     cam_id = opts.cam_id
     count = opts.count
