@@ -99,12 +99,12 @@ def point_cloud_selector(opts: CheckboardProjectionOptions) -> np.ndarray:
     K2, dst2 = intrinsics_2["calibration_mtx"],  intrinsics_2["dist"]
     R, T = stereo_calibration['R'], stereo_calibration['T']
 
-    left_image_reprojected, right_image_reprojected = reproject_stereo_pcd(pcd, K1, dst1, K2, dst2, np.eye(3), R, np.zeros((3, 1)), T)
+    #left_image_reprojected, right_image_reprojected = reproject_stereo_pcd(pcd, K1, dst1, K2, dst2, np.eye(3), R, np.zeros((3, 1)), T)
     
-    left_reproj_error = np.linalg.norm((left_points - left_image_reprojected).squeeze(1), axis=0).mean()
-    right_reproj_error = np.linalg.norm((right_points - right_image_reprojected).squeeze(1), axis=0).mean()
+    #left_reproj_error = np.linalg.norm((left_points - left_image_reprojected).squeeze(1), axis=0).mean()
+    #right_reproj_error = np.linalg.norm((right_points - right_image_reprojected).squeeze(1), axis=0).mean()
     
-    print(pcd.shape, np.linalg.norm(pcd[:, 0, :] - pcd[:, -1, :]), left_reproj_error, right_reproj_error)
+    #print(pcd.shape, np.linalg.norm(pcd[:, 0, :] - pcd[:, -1, :]), left_reproj_error, right_reproj_error)
     return pcd
 
 

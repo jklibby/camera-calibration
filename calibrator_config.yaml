@@ -22,11 +22,13 @@ camera_calibration:
  intrinsic_params_dir: intrinsic_dir
  extrinsic_params_dir: extrinsic_dir
  pattern_size:
-  - 10 #nRows of checkerboard
-  - 7 #nCols
- world_scaling: 1.5 
- single_calibration_error_threshold: 0.3
- stereo_calibration_error_threshold: 0.7
+  - 10 #number of corners in a row
+  - 7 #number of corners in a col
+ world_scaling: 1.5 #in cm (ours is 15mm)
+ #oulier thresholds if not using mouse to dynamically set
+ single_calibration_error_threshold: 0.3 
+ stereo_calibration_error_threshold: 0.7 
+
  #headless:
  #  if headless mode (true) no GUI
  #  If false, error_threshold is chosen interactively
@@ -38,7 +40,8 @@ camera_calibration:
  #  but for unit tests, no GUI (headless True)
  headless: False
 
+
 validation:
- pattern_size:
+ pattern_size: #could use a second checkerboard for validation
   - 10
   - 7
