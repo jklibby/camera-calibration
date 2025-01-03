@@ -144,8 +144,8 @@ def capture_paired_images(opts: StereoCameraCaptureOptions):
         
         if start_capture:
             if cooldown == 0:
-                cv.imwrite('{}/camera0_{}.png'.format(dir, cap_count), left_frame)
-                cv.imwrite('{}/camera1_{}.png'.format(dir, cap_count), right_frame)
+                cv.imwrite('{}/camera{}_{}.png'.format(dir, left_cam, cap_count), left_frame)
+                cv.imwrite('{}/camera{}_{}.png'.format(dir, right_cam, cap_count), right_frame)
                 cooldown = 50
                 cap_count += 1
             left_text_frame = cv.putText(left_frame, "Num of images captured: {}\n Countdown: {}".format(cap_count, cooldown),(100, 100), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2, 1)
