@@ -55,7 +55,7 @@ def capture_single_image(opts: SingleCameraCaptureOptions):
             break
         
         if not start_capture:
-            start_frame = cv.putText(frame, "Press space to begin capturing images; q to quit",(100, 100), cv.FONT_HERSHEY_COMPLEX, 1, (0, 0, 255), 2, 1)
+            start_frame = cv.putText(frame, "Press space to begin capturing images; q to quit",(100, 100), cv.FONT_HERSHEY_COMPLEX, 2, (0, 0, 255), 2, 1)
             cv.imshow("Frame", start_frame)
 
         if start_capture:
@@ -64,7 +64,7 @@ def capture_single_image(opts: SingleCameraCaptureOptions):
                 cv.imwrite(img_path, frame)
                 cooldown = 50
                 cap_count += 1
-            text_frame = cv.putText(frame, "Num of images captured: {}\n Countdown: {}".format(cap_count, cooldown),(100, 100), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2, 1)
+            text_frame = cv.putText(frame, "Num of images captured: {}\n Countdown: {}".format(cap_count, cooldown),(100, 100), cv.FONT_HERSHEY_COMPLEX, 2, (0, 0, 255), 2, 1)
             cv.imshow("Frame", text_frame)
             cooldown -= 1
             if cap_count >= count:
@@ -137,8 +137,8 @@ def capture_paired_images(opts: StereoCameraCaptureOptions):
                     left_frame = cv.remap(left_frame, left_map_x, left_map_y, cv.INTER_LANCZOS4)
                     right_frame = cv.remap(right_frame, right_map_x, right_map_y, cv.INTER_LANCZOS4)
                 
-            left_start_frame = cv.putText(left_frame, "Press space to begin capturing images; q to quit",(100, 100), cv.FONT_HERSHEY_COMPLEX, 1, (0, 0, 255), 2, 1)
-            right_start_frame = cv.putText(right_frame, "Press space to begin capturing images; q to quit",(100, 100), cv.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 2, 1)
+            left_start_frame = cv.putText(left_frame, "Press space to begin capturing images; q to quit",(100, 100), cv.FONT_HERSHEY_COMPLEX, 2, (0, 0, 255), 2, 1)
+            right_start_frame = cv.putText(right_frame, "Press space to begin capturing images; q to quit",(100, 100), cv.FONT_HERSHEY_COMPLEX, 2, (0, 0, 255), 2, 1)
             cv.imshow("Left Frame", left_start_frame)
             cv.imshow("Right Frame", right_start_frame)
         
@@ -148,8 +148,8 @@ def capture_paired_images(opts: StereoCameraCaptureOptions):
                 cv.imwrite('{}/camera{}_{}.png'.format(dir, right_cam, cap_count), right_frame)
                 cooldown = 50
                 cap_count += 1
-            left_text_frame = cv.putText(left_frame, "Num of images captured: {}\n Countdown: {}".format(cap_count, cooldown),(100, 100), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2, 1)
-            right_text_frame = cv.putText(right_frame, "Num of images captured: {}\n Countdown: {}".format(cap_count, cooldown),(100, 100), cv.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2, 1)
+            left_text_frame = cv.putText(left_frame, "Num of images captured: {}\n Countdown: {}".format(cap_count, cooldown),(100, 100), cv.FONT_HERSHEY_COMPLEX, 2, (0, 0, 255), 2, 1)
+            right_text_frame = cv.putText(right_frame, "Num of images captured: {}\n Countdown: {}".format(cap_count, cooldown),(100, 100), cv.FONT_HERSHEY_COMPLEX, 2, (0, 0, 255), 2, 1)
             cv.imshow("Left Frame", left_text_frame)
             cv.imshow("Right Frame", right_text_frame)
             cooldown -= 1

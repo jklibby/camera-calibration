@@ -11,8 +11,8 @@ cv_options:
   - 720
 
 camera_capture:
- left_cam_id: 0
- right_cam_id: 1
+ left_cam_id: 1
+ right_cam_id: 2
  image_count: 50 #intrinsic
  image_path: single_images #intrinsic
  stereo_images_path: paired_images #3xtrinsic
