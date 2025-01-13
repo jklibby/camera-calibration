@@ -14,10 +14,12 @@ runs:
       run: |
         python -m pip install gdown
         mkdir test_images && cd test_images
-        gdown ${{ env.CC_FILE_ID }}
+        gdown $CC_FILE_ID
         unzip *.zip
         rm *.zip
       shell: bash
+      env:
+        CC_FILE_ID: "11DnV4eJ260KHSar1_fIcYjrdB4gLQn7g"
     - name: Check windows cache for calibration images
       if : ${{ contains(inputs.os, 'windows') }}
       run: |
@@ -28,5 +30,7 @@ runs:
         Expand-Archive -Path (Get-ChildItem -Filter *.zip).FullName -DestinationPath . -Force
         Remove-Item *.zip
       shell: powershell
+      env:
+        CC_FILE_ID: "11DnV4eJ260KHSar1_fIcYjrdB4gLQn7g"
 
 
