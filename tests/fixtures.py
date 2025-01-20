@@ -40,7 +40,10 @@ config_dict: CalibratorConfig = {
 }
 
 #This is the file id for the google drive location of the checkerboard images.
-FILE_ID = "11DnV4eJ260KHSar1_fIcYjrdB4gLQn7g"
+#from Prof. Libby's stevens google drive:
+#research/repoLinks/camera-calibration/camera-calibration.zip
+FILE_ID = "1J0AnoTr1EID6_zyAqOS9SI4WkhY0mmbB"
+
 
 ##when pytest gets called, it will first call fixturs.py
 #   and then calibration_yaml_fixture() will be called
